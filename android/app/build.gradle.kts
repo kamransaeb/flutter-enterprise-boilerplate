@@ -1,5 +1,9 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -35,6 +39,42 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
+    // flavorDimensions Allows you to combine multiple product flavors. 
+    // Here we use “default” since we have only one flavor dimension.
+    // Example
+    // dimensions: env (dev, prod, staging) + brand (free, pro)
+    // build type: debug, release
+    // variants generated: devFreeDebug, devProRelease, prodFreeDebug, etc...
+    // manifestPlaceholders["appName"] = "Flutter Enterprise Boilerplate [STG]"
+    flavorDimensions += "env"
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "Flutter Enterprise Boilerplate [DEV]")
+            manifestPlaceholders = [
+                appIcon: "@mipmap/lamberb_ic_launcher_288_dev",
+            ]
+        }
+        create("staging") {
+            dimension = "env"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "Flutter Enterprise Boilerplate [STG]")
+            manifestPlaceholders = [
+                appIcon: "@mipmap/lamberb_ic_launcher_288_staging",
+            ]
+        }
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "Flutter Enterprise Boilerplate")
+            manifestPlaceholders = [
+                appIcon: "@mipmap/lamberb_ic_launcher_288",
+            ]
         }
     }
 }

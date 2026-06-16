@@ -1,0 +1,231 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
+
+part of 'register_request_model.dart';
+
+// **************************************************************************
+// FreezedGenerator
+// **************************************************************************
+
+// dart format off
+T _$identity<T>(T value) => value;
+
+/// @nodoc
+mixin _$RegisterRequestModel {
+
+ String get email; String get password;@JsonKey(name: 'first_name') String get firstName;@JsonKey(name: 'last_name') String get lastName;@JsonKey(name: 'phone_number') String? get phoneNumber;@JsonKey(name: 'device_id') String? get deviceId;@JsonKey(name: 'fcm_token') String? get fcmToken;
+/// Create a copy of RegisterRequestModel
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RegisterRequestModelCopyWith<RegisterRequestModel> get copyWith => _$RegisterRequestModelCopyWithImpl<RegisterRequestModel>(this as RegisterRequestModel, _$identity);
+
+  /// Serializes this RegisterRequestModel to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RegisterRequestModel&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.fcmToken, fcmToken) || other.fcmToken == fcmToken));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,email,password,firstName,lastName,phoneNumber,deviceId,fcmToken);
+
+@override
+String toString() {
+  return 'RegisterRequestModel(email: $email, password: $password, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, deviceId: $deviceId, fcmToken: $fcmToken)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RegisterRequestModelCopyWith<$Res>  {
+  factory $RegisterRequestModelCopyWith(RegisterRequestModel value, $Res Function(RegisterRequestModel) _then) = _$RegisterRequestModelCopyWithImpl;
+@useResult
+$Res call({
+ String email, String password,@JsonKey(name: 'first_name') String firstName,@JsonKey(name: 'last_name') String lastName,@JsonKey(name: 'phone_number') String? phoneNumber,@JsonKey(name: 'device_id') String? deviceId,@JsonKey(name: 'fcm_token') String? fcmToken
+});
+
+
+
+
+}
+/// @nodoc
+class _$RegisterRequestModelCopyWithImpl<$Res>
+    implements $RegisterRequestModelCopyWith<$Res> {
+  _$RegisterRequestModelCopyWithImpl(this._self, this._then);
+
+  final RegisterRequestModel _self;
+  final $Res Function(RegisterRequestModel) _then;
+
+/// Create a copy of RegisterRequestModel
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? email = null,Object? password = null,Object? firstName = null,Object? lastName = null,Object? phoneNumber = freezed,Object? deviceId = freezed,Object? fcmToken = freezed,}) {
+  return _then(_self.copyWith(
+email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
+as String,firstName: null == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as String,lastName: null == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
+as String,phoneNumber: freezed == phoneNumber ? _self.phoneNumber : phoneNumber // ignore: cast_nullable_to_non_nullable
+as String?,deviceId: freezed == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
+as String?,fcmToken: freezed == fcmToken ? _self.fcmToken : fcmToken // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [RegisterRequestModel].
+extension RegisterRequestModelPatterns on RegisterRequestModel {
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email,  String password, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName, @JsonKey(name: 'phone_number')  String? phoneNumber, @JsonKey(name: 'device_id')  String? deviceId, @JsonKey(name: 'fcm_token')  String? fcmToken)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _RegisterRequestModel() when $default != null:
+return $default(_that.email,_that.password,_that.firstName,_that.lastName,_that.phoneNumber,_that.deviceId,_that.fcmToken);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email,  String password, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName, @JsonKey(name: 'phone_number')  String? phoneNumber, @JsonKey(name: 'device_id')  String? deviceId, @JsonKey(name: 'fcm_token')  String? fcmToken)  $default,) {final _that = this;
+switch (_that) {
+case _RegisterRequestModel():
+return $default(_that.email,_that.password,_that.firstName,_that.lastName,_that.phoneNumber,_that.deviceId,_that.fcmToken);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email,  String password, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName, @JsonKey(name: 'phone_number')  String? phoneNumber, @JsonKey(name: 'device_id')  String? deviceId, @JsonKey(name: 'fcm_token')  String? fcmToken)?  $default,) {final _that = this;
+switch (_that) {
+case _RegisterRequestModel() when $default != null:
+return $default(_that.email,_that.password,_that.firstName,_that.lastName,_that.phoneNumber,_that.deviceId,_that.fcmToken);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _RegisterRequestModel implements RegisterRequestModel {
+  const _RegisterRequestModel({required this.email, required this.password, @JsonKey(name: 'first_name') required this.firstName, @JsonKey(name: 'last_name') required this.lastName, @JsonKey(name: 'phone_number') this.phoneNumber, @JsonKey(name: 'device_id') this.deviceId, @JsonKey(name: 'fcm_token') this.fcmToken});
+  factory _RegisterRequestModel.fromJson(Map<String, dynamic> json) => _$RegisterRequestModelFromJson(json);
+
+@override final  String email;
+@override final  String password;
+@override@JsonKey(name: 'first_name') final  String firstName;
+@override@JsonKey(name: 'last_name') final  String lastName;
+@override@JsonKey(name: 'phone_number') final  String? phoneNumber;
+@override@JsonKey(name: 'device_id') final  String? deviceId;
+@override@JsonKey(name: 'fcm_token') final  String? fcmToken;
+
+/// Create a copy of RegisterRequestModel
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$RegisterRequestModelCopyWith<_RegisterRequestModel> get copyWith => __$RegisterRequestModelCopyWithImpl<_RegisterRequestModel>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$RegisterRequestModelToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RegisterRequestModel&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.fcmToken, fcmToken) || other.fcmToken == fcmToken));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,email,password,firstName,lastName,phoneNumber,deviceId,fcmToken);
+
+@override
+String toString() {
+  return 'RegisterRequestModel(email: $email, password: $password, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, deviceId: $deviceId, fcmToken: $fcmToken)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$RegisterRequestModelCopyWith<$Res> implements $RegisterRequestModelCopyWith<$Res> {
+  factory _$RegisterRequestModelCopyWith(_RegisterRequestModel value, $Res Function(_RegisterRequestModel) _then) = __$RegisterRequestModelCopyWithImpl;
+@override @useResult
+$Res call({
+ String email, String password,@JsonKey(name: 'first_name') String firstName,@JsonKey(name: 'last_name') String lastName,@JsonKey(name: 'phone_number') String? phoneNumber,@JsonKey(name: 'device_id') String? deviceId,@JsonKey(name: 'fcm_token') String? fcmToken
+});
+
+
+
+
+}
+/// @nodoc
+class __$RegisterRequestModelCopyWithImpl<$Res>
+    implements _$RegisterRequestModelCopyWith<$Res> {
+  __$RegisterRequestModelCopyWithImpl(this._self, this._then);
+
+  final _RegisterRequestModel _self;
+  final $Res Function(_RegisterRequestModel) _then;
+
+/// Create a copy of RegisterRequestModel
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? email = null,Object? password = null,Object? firstName = null,Object? lastName = null,Object? phoneNumber = freezed,Object? deviceId = freezed,Object? fcmToken = freezed,}) {
+  return _then(_RegisterRequestModel(
+email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
+as String,firstName: null == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as String,lastName: null == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
+as String,phoneNumber: freezed == phoneNumber ? _self.phoneNumber : phoneNumber // ignore: cast_nullable_to_non_nullable
+as String?,deviceId: freezed == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
+as String?,fcmToken: freezed == fcmToken ? _self.fcmToken : fcmToken // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+// dart format on

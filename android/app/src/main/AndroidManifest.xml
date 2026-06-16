@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- Commented out the icon to avoid the error -->
+<!-- android:icon="@mipmap/ic_launcher"> -->
     <application
-        android:label="flutter_enterprise_boilerplate"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "947247875943",
+    "project_id": "lamberb-com-prod",
+    "storage_bucket": "lamberb-com-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:947247875943:android:c41927067bf14eed0ed1c2",
+        "android_client_info": {
+          "package_name": "com.rtchoke.flutter_enterprise_boilerplate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkTPUBb4ctE3BuRyTKjz7Nvs7OWHWRg7M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

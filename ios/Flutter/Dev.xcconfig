@@ -1,0 +1,5 @@
+#include "Generated.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.rtchoke.flutter_enterprise_boilerplate.dev
+APP_NAME = Flutter Enterprise Boilerplate [DEV]
+FLUTTER_TARGET = lib/main_dev.dart

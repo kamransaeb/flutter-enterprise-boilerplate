@@ -1,0 +1,5 @@
+#include "Generated.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.rtchoke.flutter_enterprise_boilerplate.staging
+APP_NAME = Flutter Enterprise Boilerplate [STG]
+FLUTTER_TARGET = lib/main_staging.dart

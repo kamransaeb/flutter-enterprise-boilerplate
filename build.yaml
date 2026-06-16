@@ -1,0 +1,141 @@
+targets:
+  $default:
+    sources:
+      # Include files for build
+      include:
+        - $package$
+        - lib/**
+        - pubspec.*
+
+      # Exclude files from build
+      exclude:
+        - "**/*.g.dart"
+        - "**/*.freezed.dart"
+        - "**/*.gr.dart"
+        - "**/*.config.dart"
+        - "**/generated/**"
+        - "**/build/**"
+        - "**/.dart_tool/**"
+        - "test/**"
+        - "integration_test/**"
+
+    builders:
+      # Freezed code generation
+      freezed:
+        enabled: true
+        generate_for:
+          - lib/**/*.dart
+        options:
+          union_key: type
+          union_value_case: kebab
+
+      # JSON serialization
+      json_serializable:
+        enabled: true
+        generate_for:
+          - lib/**/*.dart
+        options:
+          explicit_to_json: true
+          any_map: false
+          checked: true
+
+      # Injectable code generation (use split builders; there is no
+      # `injectable_generator:injectable_generator` builder key.)
+      # package_name:builder_name
+      injectable_generator:injectable_builder:
+        enabled: true
+        options:
+          prefer_relative_imports: true
+
+      injectable_generator:injectable_config_builder:
+        enabled: true
+        generate_for:
+          - lib/infrastructure/di/injection.dart
+
+      # Retrofit code generation
+      retrofit_generator:
+        enabled: true
+        generate_for:
+          - lib/features/**/data/datasources/*_data_source.dart
+          - lib/infrastructure/network/client/api_client.dart   # add this
+        options:
+          auto_cast_response: true
+
+      # AutoRoute code generation
+      auto_route_generator:
+        enabled: true
+        generate_for:
+          - lib/routes/app_router.dart
+        options:
+          generate_for_dir:
+            - lib/features/**/presentation/pages
+          generate_navigator_for_dir:
+            - lib/features
+
+# builders:
+#   # Configure build_runner
+#   build_runner:
+#     target: ":build_runner"
+#     import: "package:build_runner/build_runner.dart"
+#     builder_factories: ["runBuilder"]
+#     build_extensions: {".dart": [".g.dart", ".gr.dart", ".freezed.dart"]}
+#     auto_apply: dependents
+#     build_to: cache
+#     applies_builders: ["source_gen|combining_builder"]
+
+#   # Custom builder for mocks
+#   mock_builder:
+#     import: "package:mockito/annotations.dart"
+#     builder_factories: ["generateMocks"]
+#     build_extensions: {".dart": [".mocks.dart"]}
+#     auto_apply: dependents
+#     build_to: source
+#     applies_builders: ["source_gen|combining_builder"]
+
+global_options:
+  # Freezed options
+  freezed:
+    options:
+      union_key: runtimeType
+      union_value_case: none
+      mutable: false
+      make_collections_unmodifiable: true
+      map: false
+      when: true
+      maybeWhen: true
+      mapOrNull: false
+      whenOrNull: true
+
+  # JSON serializable options
+  json_serializable:
+    options:
+      explicit_to_json: true
+      any_map: false
+      checked: true
+      disallow_unrecognized_keys: true
+      generic_argument_factories: true
+
+  # Retrofit options
+  retrofit_generator:
+    options:
+      auto_cast_response: true
+      generate_to_json: true
+      serializable_class: true
+
+  # AutoRoute options
+  auto_route_generator:
+    options:
+      generate_route_setter: true
+      generate_navigator_for_dir: true
+      use_initial_route: true
+      generate_for_dir:
+        - lib/features
+      relative_imports: true
+
+  # Injectable options (must match real builder id)
+  injectable_generator:injectable_builder:
+    options:
+      prefer_relative_imports: true
+      generate_for_dir:
+        - lib
+      auto_register: true

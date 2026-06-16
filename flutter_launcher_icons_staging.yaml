@@ -1,0 +1,5 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/png/logos/lamberb_app_icon_staging.png
+  remove_alpha_ios: true

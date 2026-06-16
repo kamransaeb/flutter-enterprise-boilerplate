@@ -1,0 +1,31 @@
+{
+    "app": {
+      "name": "Enterprise App Dev",
+      "version": "1.0.0",
+      "buildNumber": "1"
+    },
+    "api": {
+      "baseUrl": "https://dev.api.enterprise.com/api/v1",
+      "timeout": 30,
+      "enableLogging": true
+    },
+    "firebase": {
+      "enabled": true,
+      "analyticsEnabled": true,
+      "crashlyticsEnabled": false,
+      "performanceEnabled": true
+    },
+    "features": {
+      "analytics": true,
+      "crashReporting": false,
+      "deepLinking": true,
+      "pushNotifications": true,
+      "biometricAuth": true
+    },
+    "debug": {
+      "showDebugBanner": true,
+      "enableLogging": true,
+      "enableInspector": true,
+      "mockApiResponses": false
+    }
+  }
