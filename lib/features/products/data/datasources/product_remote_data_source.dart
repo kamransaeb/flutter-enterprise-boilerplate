@@ -48,14 +48,15 @@ abstract class ProductRemoteDataSource {
     required ProductReviewModel productReviewModel,
   });
 
-  // Toggle favorite
-  Future<ApiResponse<void>> toggleFavorite({required String productId});
 
-  // Get favorites
-  Future<ApiResponse<List<ProductModel>>> getFavorites({
+  // Toggle wishlist
+  Future<ApiResponse<void>> toggleWishlist({required String productId});
+  Future<ApiResponse<List<ProductModel>>> getWishlist({
     int page = 1,
     int limit = 20,
   });
+  Future<ApiResponse<void>> removeFromWishlist({required String productId});
+  Future<ApiResponse<void>> addToWishlist({required String productId});
 
   // Search products
   Future<ApiResponse<List<ProductModel>>> searchProducts({
@@ -67,6 +68,11 @@ abstract class ProductRemoteDataSource {
   // Get related products
    Future<ApiResponse<List<ProductModel>>> getRelatedProducts({
     required String productId,
+  });
+
+  // Get recently viewed products
+  Future<ApiResponse<List<ProductModel>>> getRecentlyViewed({
+    int limit = 10,
   });
 
   // // Get trending products

@@ -12,50 +12,83 @@ abstract class ProductLocalDataSource {
     required int limit,
     ProductFilter? filter,
   });
-  
+
   Future<PaginatedCacheResponse<ProductModel>?> getCachedProducts({
     required int page,
     required int limit,
     ProductFilter? filter,
   });
-  
+
   Future<void> cacheProduct(ProductModel product);
   Future<ProductModel?> getCachedProduct(String productId);
   Future<void> cacheMultipleProducts(List<ProductModel> products);
   Future<List<ProductModel>> getCachedProductsByIds(List<String> productIds);
-  
+
   // Category caching
   Future<void> cacheCategories(List<ProductCategoryModel> categories);
   Future<List<ProductCategoryModel>> getCachedCategories();
   Future<ProductCategoryModel?> getCachedCategory(String categoryId);
-  
-  // Review caching
-  Future<void> cacheReviews({
+
+  // ProductReview caching
+  Future<void> cacheProductReviews({
     required String productId,
     required List<ProductReviewModel> reviews,
     required int page,
     required int limit,
   });
-  Future<List<ProductReviewModel>> getCachedReviews(String productId);
-  
+  Future<List<ProductReviewModel>> getCachedProductReviews({
+    required String productId,
+    required int page,
+    required int limit,
+  });
+  Future<void> addToCachedProductReviews({
+    required String productId,
+    required ProductReviewModel review,
+    required int page,
+    required int limit,
+  });
+
   // Search and filter
   Future<List<ProductModel>> searchCachedProducts(String query);
   Future<List<ProductModel>> filterCachedProducts(ProductFilter filter);
-  
+
   // Recently viewed
-  Future<void> addToRecentlyViewed(ProductModel product);
-  Future<List<ProductModel>> getRecentlyViewed();
-  Future<void> clearRecentlyViewed();
-  
+  Future<void> cacheRecentlyViewed(List<ProductModel> products);
+  Future<List<ProductModel>> getCachedRecentlyViewed();
+  Future<void> addToCachedRecentlyViewed(ProductModel product);
+  Future<void> clearCachedRecentlyViewed();
+
   // Wishlist
-  Future<void> addToWishlist(String productId);
-  Future<void> removeFromWishlist(String productId);
-  Future<bool> isInWishlist(String productId);
-  Future<List<ProductModel>> getWishlist();
-  Future<void> clearWishlist();
-  
+  Future<void> cacheWishlist(List<ProductModel> products);
+  Future<List<ProductModel>> getCachedWishlist();
+  Future<void> addToCachedWishlist(String productId);
+  Future<void> removeFromCachedWishlist(String productId);
+  Future<bool> isInCachedWishlist(String productId);
+  Future<void> clearCachedWishlist();
+  // *** IMPORTANT: toggleCachedWishlist is not implemented because
+  // it can revert the local change if the remote fails
+  //Future<void> toggleCachedWishlist(String productId);
+
+
   // Cache management
   Future<void> clearCache();
   Future<void> clearExpiredCache();
   Future<int> getCacheSize();
+
+  // Featured products
+  Future<void> cacheFeaturedProducts({
+    required List<ProductModel> products,
+    int limit = 10,
+  });
+
+  Future<List<ProductModel>> getCachedFeaturedProducts({int limit = 10});
+
+    // Related products
+  Future<void> cacheRelatedProducts({
+    required String productId,
+    required List<ProductModel> products,
+  });
+  Future<List<ProductModel>> getCachedRelatedProducts(String productId);
+
+
 }

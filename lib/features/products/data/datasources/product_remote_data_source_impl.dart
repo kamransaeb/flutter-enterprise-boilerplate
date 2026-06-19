@@ -92,9 +92,11 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<ApiResponse<List<ProductModel>>> getFeaturedProducts() async {
+  Future<ApiResponse<List<ProductModel>>> getFeaturedProducts({
+    int limit = 10,
+  }) async {
     try {
-      final httpResponse = await _apiClient.getFeaturedProducts();
+      final httpResponse = await _apiClient.getFeaturedProducts(limit: limit);
       final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
         httpResponse.response,
         (json) => _parseProductList(json),
@@ -170,22 +172,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     }
   }
 
-  List<ProductReviewModel> _parseProductReviewList(dynamic json) {
-    if (json is List) {
-      return json
-          .map((e) => ProductReviewModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    if (json is Map<String, dynamic>) {
-      final data = json['data'] ?? json['items'] ?? json['reviews'];
-      if (data is List) {
-        return data
-            .map((e) => ProductReviewModel.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-    }
-    return [];
-  }
+
 
   Future<ApiResponse<ProductReviewModel>> addProductReview({
     required String productId,
@@ -215,13 +202,13 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     }
   }
 
-  Future<ApiResponse<void>> toggleFavorite({required String productId}) async {
+  Future<ApiResponse<void>> toggleWishlist({required String productId}) async {
     try {
       final wishlistResponse = await _apiClient.getWishlist();
       final wishList = _parseWishlistProducts(wishlistResponse.response.data);
-      final isFavorite = wishList.contains(productId);
+      final isInWishlist = wishList.contains(productId);
 
-      final httpResponse = isFavorite
+      final httpResponse = isInWishlist
           ? await _apiClient.removeFromWishlist(productId)
           : await _apiClient.addToWishlist({'product_id': productId});
 
@@ -246,7 +233,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<ApiResponse<List<ProductModel>>> getFavorites({
+  Future<ApiResponse<List<ProductModel>>> getWishlist({
     int page = 1,
     int limit = 20,
   }) async {
@@ -284,20 +271,14 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<ApiResponse<List<ProductModel>>> searchProducts({
-    required String query,
-    int page = 1,
-    int limit = 20,
+  Future<ApiResponse<void>> removeFromWishlist({
+    required String productId,
   }) async {
     try {
-      final httpResponse = await _apiClient.searchProducts(
-        query: query,
-        page: page,
-        limit: limit,
-      );
-      final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
+      final httpResponse = await _apiClient.removeFromWishlist(productId);
+      final apiResponse = ResponseConverter.toApiResponse<void>(
         httpResponse.response,
-        (json) => _parseProductList(json),
+        (json) => null,
       );
       if (apiResponse.isSuccess) return apiResponse;
       return ErrorApiResponse(
@@ -306,7 +287,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       );
     } catch (e, stackTrace) {
       logger.e(
-        '[ProductRemoteDataSourceImpl] searchProducts failed',
+        '[ProductRemoteDataSourceImpl] removeFromWishlist failed',
         error: e,
         stackTrace: stackTrace,
       );
@@ -315,13 +296,36 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<ApiResponse<List<ProductModel>>> getRelatedProducts({
-    required String productId,
+  Future<ApiResponse<void>> addToWishlist({required String productId}) async {
+    try {
+      final httpResponse = await _apiClient.addToWishlist({
+        'product_id': productId,
+      });
+      final apiResponse = ResponseConverter.toApiResponse<void>(
+        httpResponse.response,
+        (json) => null,
+      );
+      if (apiResponse.isSuccess) return apiResponse;
+      return ErrorApiResponse(
+        statusCode: httpResponse.response.statusCode,
+        error: ResponseConverter.toErrorResponse(httpResponse.response),
+      );
+    } catch (e, stackTrace) {
+      logger.e(
+        '[ProductRemoteDataSourceImpl] addToWishlist failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ErrorApiResponse.fromException(e, stackTrace: stackTrace);
+    }
+  }
+
+  @override
+  Future<ApiResponse<List<ProductModel>>> getRecentlyViewed({
+    int limit = 10,
   }) async {
     try {
-      final httpResponse = await _apiClient.getRelatedProducts(
-        productId: productId,
-      );
+      final httpResponse = await _apiClient.getRecentlyViewed(limit: limit);
       final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
         httpResponse.response,
         (json) => _parseProductList(json),
@@ -332,20 +336,27 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
-        '[ProductRemoteDataSourceImpl] getRelatedProducts failed',
-        error: e,
-        stackTrace: stackTrace,
-      );
       return ErrorApiResponse.fromException(e, stackTrace: stackTrace);
     }
   }
 
-  // Implement other methods the same way (featured, categories, reviews, etc.)
+  @override
+  Future<ApiResponse<List<ProductModel>>> getRelatedProducts({
+    required String productId,
+  }) {
+    // TODO: implement getRelatedProducts
+    throw UnimplementedError();
+  }
 
-  // ---------------------------------------------------------------------------
-  // Parsers
-  // ---------------------------------------------------------------------------
+  @override
+  Future<ApiResponse<List<ProductModel>>> searchProducts({
+    required String query,
+    int page = 1,
+    int limit = 20,
+  }) {
+    // TODO: implement searchProducts
+    throw UnimplementedError();
+  }
 
   List<ProductModel> _parseProductList(dynamic json) {
     if (json is List) {
@@ -362,6 +373,27 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       }
     }
     return [];
+  }
+
+  Set<String> _parseWithlistProductIds(dynamic json) {
+    if (json is! List) return {};
+
+    return json
+        .map((item) {
+          if (item is! Map<String, dynamic>) return null;
+
+          if (item['product_id'] is String) return item['product_id'] as String;
+          if (item['id'] is String) return item['id'] as String;
+
+          final product = item['product'];
+          if (product is Map<String, dynamic> && product['id'] is String) {
+            return product['id'] as String;
+          }
+          return null;
+          //keeps only elemeets that are actually a String, and drops everything else
+        })
+        .whereType<String>()
+        .toSet();
   }
 
   List<ProductCategoryModel> _parseCategoryList(dynamic json) {
@@ -398,24 +430,20 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .toList();
   }
 
-  Set<String> _parseWithlistProductIds(dynamic json) {
-    if (json is! List) return {};
-
-    return json
-        .map((item) {
-          if (item is! Map<String, dynamic>) return null;
-
-          if (item['product_id'] is String) return item['product_id'] as String;
-          if (item['id'] is String) return item['id'] as String;
-
-          final product = item['product'];
-          if (product is Map<String, dynamic> && product['id'] is String) {
-            return product['id'] as String;
-          }
-          return null;
-          //keeps only elemeets that are actually a String, and drops everything else
-        })
-        .whereType<String>()
-        .toSet();
+    List<ProductReviewModel> _parseProductReviewList(dynamic json) {
+    if (json is List) {
+      return json
+          .map((e) => ProductReviewModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    if (json is Map<String, dynamic>) {
+      final data = json['data'] ?? json['items'] ?? json['reviews'];
+      if (data is List) {
+        return data
+            .map((e) => ProductReviewModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    }
+    return [];
   }
 }

@@ -28,11 +28,94 @@ import 'package:injectable/injectable.dart';
 // - You use a typed box like Box<ProductModel> everywhere
 @LazySingleton(as: ProductLocalDataSource)
 class ProductLocalDataSourceImpl implements ProductLocalDataSource {
+  
   ProductLocalDataSourceImpl({
     @Named('hive_storage') required LocalStorage hiveStorage,
   }) : _hiveStorage = hiveStorage;
 
   final LocalStorage _hiveStorage;
+
+  
+ 
+  
+  @override
+  Future<void> cacheFeaturedProducts({required List<ProductModel> products, int limit = 10}) async {
+    
+    try {
+      final key = _featuredProductsKey(limit: limit);
+      final payload = {
+        'products': products.map((e) => e.toJson()).toList(),
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+      final json = jsonEncode(payload);
+      await _hiveStorage.write(key, json, boxName: StorageConstants.productsBox);
+    } catch (e, stackTrace) {
+      _logAndRethrow('cacheFeaturedProducts', 'Failed to cache featured products', e, stackTrace);
+    }
+  }
+
+  @override
+  Future<List<ProductModel>> getCachedFeaturedProducts({int limit = 10}) async {
+    // TODO: implement getCachedFeaturedProducts
+    try {
+      final key = _featuredProductsKey(limit: limit);
+      final cached = await _hiveStorage.read<String>(
+        key,
+        boxName: StorageConstants.productsBox,
+      );
+      if (cached == null) return [];
+      final map = jsonDecode(cached) as Map<String, dynamic>;
+      final cachedAt = DateTime.parse(map['cachedAt'] as String);
+      if (_isExpired(cachedAt)) {
+        await _hiveStorage.delete(key, boxName: StorageConstants.productsBox);
+        return [];
+      }
+      final products = map['products'] as List<dynamic>;
+      return products.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (e, stackTrace) {
+      _logAndRethrow('getCachedFeaturedProducts', 'Failed to get cached featured products', e, stackTrace);
+    }
+  }
+
+   @override
+  Future<void> cacheRelatedProducts({required String productId, required List<ProductModel> products}) async {
+    try {
+      final key = _relatedProductsKey(productId: productId);
+      final payload = {
+        'products': products.map((e) => e.toJson()).toList(),
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+      final json = jsonEncode(payload);
+      await _hiveStorage.write(key, json, boxName: StorageConstants.productsBox);
+    } catch (e, stackTrace) {
+      _logAndRethrow('cacheRelatedProducts', 'Failed to cache related products', e, stackTrace);
+    }
+  }
+  
+  @override
+  Future<List<ProductModel>> getCachedRelatedProducts(String productId) async  {
+    // TODO: implement getCachedRelatedProducts
+    try {
+      final key = _relatedProductsKey(productId: productId);
+      final cached = await _hiveStorage.read<String>(
+        key,
+        boxName: StorageConstants.productsBox,
+      );
+      if (cached == null) return [];
+      final map = jsonDecode(cached) as Map<String, dynamic>;
+      final cachedAt = DateTime.parse(map['cachedAt'] as String);
+      if (_isExpired(cachedAt)) {
+        await _hiveStorage.delete(key, boxName: StorageConstants.productsBox);
+        return [];
+      }
+      final products = map['products'] as List<dynamic>;
+      return products.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (e, stackTrace) {
+      _logAndRethrow('getCachedRelatedProducts', 'Failed to get cached related products', e, stackTrace);
+    }
+  }
+  
+ 
 
   @override
   Future<void> cacheProducts({
@@ -182,7 +265,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
     try {
       final payload = categories.map((e) => e.toJson()).toList();
       await _hiveStorage.write(
-        StorageConstants.productsBoxCategoriesKey,
+        _categoriesKey(),
         jsonEncode({
           'categories': payload,
           'cachedAt': DateTime.now().toIso8601String(),
@@ -203,7 +286,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   Future<List<ProductCategoryModel>> getCachedCategories() async {
     try {
       final raw = await _hiveStorage.read<String>(
-        StorageConstants.productsBoxCategoriesKey,
+        _categoriesKey(),
         boxName: StorageConstants.productsBox,
       );
       if (raw == null) return [];
@@ -212,8 +295,8 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
       final cachedAt = DateTime.tryParse(map['cachedAt'] as String? ?? '');
       if (cachedAt != null && _isExpired(cachedAt)) {
         await _hiveStorage.delete(
-          StorageConstants.productsBoxCategoriesKey,
-          boxName: StorageConstants.productsBoxCategoriesKey,
+          _categoriesKey(),
+          boxName: StorageConstants.productsBox,
         );
         return [];
       }
@@ -239,6 +322,8 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
       // The type information Dart infers for that function from its surrounding
       // call site. So the code that calls firstWhere must expect a ProductCategoryModel.
       // for .firstWhere on List<ProductCategoryModel> must return a ProductCategoryModel.
+      // This is why we can't use .firstWhere here. because it returns a ProductCategoryModel?
+      // orElse: () => null, is not a ProductCategoryModel.
       // ProductCagtegoryModel firstWhere(
       //     bool Function(ProductCategoryModel element) test, 
       //     { ProductCategoryModel Function()? orElse, }
@@ -248,6 +333,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
       //       (category) => category.id == categoryId,
       //       orElse: () => null,
       //     );
+     
       for (final category in categories) {
         if (category.id == categoryId) return category;
       }   
@@ -263,7 +349,65 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }
 
   @override
-  Future<void> cacheReviews({
+  Future<void> addToCachedProductReviews({
+    required String productId,
+    required ProductReviewModel review,
+    required int page,
+    required int limit,
+  }) async {
+    try {
+      final reviews = await getCachedProductReviews(
+        productId: productId, page: page, limit: limit
+        );
+      reviews.insert(0, review);
+      if (reviews.length > limit) {
+        reviews.removeRange(limit, reviews.length);
+      }
+      await cacheProductReviews(
+        productId: productId,
+        reviews: reviews,
+        page: page,
+        limit: limit,
+      );
+      // Page 2+ is stale after insert — delete those keys
+      await _invalidateCachedProductReviews(
+        productId: productId, exceptPage: page, limit: limit);
+      // optional: only cache the new review on page 1 after next fetch
+    } catch (e, stackTrace) {
+      _logAndRethrow('addToCachedProductReviews', 'Failed to add review to cached product reviews', e, stackTrace);
+    }
+  }
+
+  /// Deletes cached review pages for [productId] except the page/limit bucket
+/// that was just updated (page 2+ becomes stale after inserting on page 1).
+Future<void> _invalidateCachedProductReviews({
+  required String productId,
+  required int exceptPage,
+  required int limit,
+}) async {
+  final prefix = _reviewsPrefix(productId);
+  final keepKey = _reviewsKey(
+    productId: productId,
+    page: exceptPage,
+    limit: limit,
+  );
+
+  final all = await _hiveStorage.getAll(
+    boxName: StorageConstants.productsBox,
+  );
+
+  for (final key in all.keys) {
+    if (!key.startsWith(prefix)) continue;
+    if (key == keepKey) continue;
+    await _hiveStorage.delete(
+      key,
+      boxName: StorageConstants.productsBox,
+    );
+  }
+}
+
+  @override
+  Future<void> cacheProductReviews({
     required String productId,
     required List<ProductReviewModel> reviews,
     required int page,
@@ -287,31 +431,24 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }
 
   @override
-  Future<List<ProductReviewModel>> getCachedReviews(String productId) async {
+  Future<List<ProductReviewModel>> getCachedProductReviews(
+    {required String productId, required int page, required int limit}) async {
     try {
-      final all = await _hiveStorage.getAll(
+      final key = _reviewsKey(productId: productId, page: page, limit: limit);
+
+      final cached = await _hiveStorage.read<String>(
+        key,
         boxName: StorageConstants.productsBox,
       );
-      final reviewsKey = _reviewsPrefix(productId);
-      final reviews = <ProductReviewModel>[];
-
-      for (final entry in all.entries) {
-        if (!entry.key.startsWith(reviewsKey)) continue;
-        final raw = entry.value;
-        if (raw is! String) continue;
-
-        final map = jsonDecode(raw) as Map<String, dynamic>;
-        final cachedAt = DateTime.tryParse(map['cachedAt'] as String? ?? '');
-        if (cachedAt == null || _isExpired(cachedAt)) continue;
-
-        final list = map['reviews'] as List<dynamic>;
-        reviews.addAll(
-          list.map(
-            (e) => ProductReviewModel.fromJson(e as Map<String, dynamic>),
-          ),
-        );
+      if (cached == null) return [];
+      final map = jsonDecode(cached) as Map<String, dynamic>;
+      final cachedAt = DateTime.parse(map['cachedAt'] as String);
+      if (_isExpired(cachedAt)) {
+        await _hiveStorage.delete(key, boxName: StorageConstants.productsBox);
+        return [];
       }
-      return reviews;
+      final reviews = map['reviews'] as List<dynamic>;
+      return reviews.map((e) => ProductReviewModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e, stackTrace) {
       _logAndRethrow(
         'getCachedReviews',
@@ -384,12 +521,28 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
     }
   }
 
+   @override
+  Future<void> cacheRecentlyViewed(List<ProductModel> products) async {
+    try {
+      final key = _recentlyViewedKey();
+      final payload = {
+        'products': products.map((e) => e.toJson()).toList(),
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+      final json = jsonEncode(payload);
+      await _hiveStorage.write(key, json, boxName: StorageConstants.productsBox);
+    } catch (e, stackTrace) {
+      _logAndRethrow('cacheRecentlyViewed', 'Failed to cache recently viewed products', e, stackTrace);
+    }
+   
+  }
+
   @override
-  Future<void> addToRecentlyViewed(ProductModel product) async {
+  Future<void> addToCachedRecentlyViewed(ProductModel product) async {
     try {
       await cacheProduct(product);
       final ids = await _readIdList(
-        key: StorageConstants.productsBoxRecentlyViewedKey,
+        key: _recentlyViewedKey(),
       );
       ids
       ..remove(product.id)
@@ -399,7 +552,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
           .take(StorageConstants.productsMaxRecentlyViewedItems)
           .toList();
       await _writeIdList(
-        key: StorageConstants.productsBoxRecentlyViewedKey,
+        key: _recentlyViewedKey(),
         ids: trimmed,
       );
     } catch (e, stackTrace) {
@@ -413,10 +566,10 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }
 
   @override
-  Future<List<ProductModel>> getRecentlyViewed() async {
+  Future<List<ProductModel>> getCachedRecentlyViewed() async {
     try {
       final ids = await _readIdList(
-        key: StorageConstants.productsBoxRecentlyViewedKey,
+        key: _recentlyViewedKey(),
       );
       return getCachedProductsByIds(ids);
     } catch (e, stackTrace) {
@@ -430,10 +583,10 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }
 
   @override
-  Future<void> clearRecentlyViewed() async {
+  Future<void> clearCachedRecentlyViewed() async {
     try {
       await _hiveStorage.delete(
-        StorageConstants.productsBoxRecentlyViewedKey,
+        _recentlyViewedKey(),
         boxName: StorageConstants.productsBox,
       );
     } catch (e, stackTrace) {
@@ -446,16 +599,31 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
     }
   }
 
+ @override
+  Future<void> cacheWishlist(List<ProductModel> products) async {
+    try {
+      final key = _wishlistKey();
+      final payload = {
+        'products': products.map((e) => e.toJson()).toList(),
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+      final json = jsonEncode(payload);
+      await _hiveStorage.write(key, json, boxName: StorageConstants.productsBox);
+    } catch (e, stackTrace) {
+      _logAndRethrow('cacheWishlist', 'Failed to cache wishlist', e, stackTrace);
+    }
+  }
+
   @override
-  Future<void> addToWishlist(String productId) async {
+  Future<void> addToCachedWishlist(String productId) async {
     try {
       final ids = await _readIdList(
-        key: StorageConstants.productsBoxWishlistKey,
+        key: _wishlistKey(),
       );
       if (!ids.contains(productId)) {
         ids.add(productId);
         await _writeIdList(
-          key: StorageConstants.productsBoxWishlistKey,
+          key: _wishlistKey(),
           ids: ids,
         );
       }
@@ -468,16 +636,39 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
       );
     }
   }
+  
+  /// *** IMPORTANT: toggleCachedWishlist is not implemented because
+  /// it can revert the local change if the remote fails
+  // @override
+  // Future<void> toggleCachedWishlist(String productId) async {
+  //   try {
+  //     final ids = await _readIdList(
+  //       key: _wishlistKey(),
+  //     );
+  //     if (ids.contains(productId)) {
+  //       await removeFromCachedWishlist(productId);
+  //     } else {
+  //       await addToCachedWishlist(productId);
+  //     }
+  //   } catch (e, stackTrace) {
+  //     _logAndRethrow(
+  //       'toggleWishlist',
+  //       'Failed to toggle wishlist',
+  //       e,
+  //       stackTrace,
+  //     );
+  //   }
+  // } 
 
   @override
-  Future<void> removeFromWishlist(String productId) async {
+  Future<void> removeFromCachedWishlist(String productId) async {
     try {
       final ids = await _readIdList(
-        key: StorageConstants.productsBoxWishlistKey,
+        key: _wishlistKey(),
       );
       ids.remove(productId);
       await _writeIdList(
-        key: StorageConstants.productsBoxWishlistKey,
+        key: _wishlistKey(),
         ids: ids,
       );
     } catch (e, stackTrace) {
@@ -491,10 +682,10 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }
 
   @override
-  Future<bool> isInWishlist(String productId) async {
+  Future<bool> isInCachedWishlist(String productId) async {
     try {
       final ids = await _readIdList(
-        key: StorageConstants.productsBoxWishlistKey,
+        key: _wishlistKey(),
       );
       return ids.contains(productId);
     } catch (e, stackTrace) {
@@ -507,11 +698,12 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
     }
   }
 
+ 
   @override
-  Future<List<ProductModel>> getWishlist() async {
+  Future<List<ProductModel>> getCachedWishlist() async {
     try {
       final ids = await _readIdList(
-        key: StorageConstants.productsBoxWishlistKey,
+        key: _wishlistKey(),
       );
       return getCachedProductsByIds(ids);
     } catch (e, stackTrace) {
@@ -525,10 +717,10 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }
 
   @override
-  Future<void> clearWishlist() async {
+  Future<void> clearCachedWishlist() async {
     try {
       await _hiveStorage.delete(
-        StorageConstants.productsBoxWishlistKey,
+        _wishlistKey(),
         boxName: StorageConstants.productsBox,
       );
     } catch (e, stackTrace) {
@@ -540,7 +732,6 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
       );
     }
   }
-
 
   @override
   Future<void> clearCache() async {
@@ -641,6 +832,27 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   '${StorageConstants.productsBoxReviewsPrefix}'
   '$productId:';
 
+   String _wishlistKey() => 
+   '${StorageConstants.productsBoxProductsPrefix}'
+   '${StorageConstants.productsBoxWishlistPrefix}';
+
+
+  String _categoriesKey() => 
+  '${StorageConstants.productsBoxProductsPrefix}'
+  '${StorageConstants.productsBoxCategoriesPrefix}';
+  String _recentlyViewedKey() => 
+  '${StorageConstants.productsBoxProductsPrefix}'
+  '${StorageConstants.productsBoxRecentlyViewedPrefix}';
+  String _relatedProductsKey(String productId) => 
+  '${StorageConstants.productsBoxProductsPrefix}'
+  '${StorageConstants.productsBoxRelatedProductsPrefix}'
+  '$productId:';
+  String _featuredProductsKey(int limit) => 
+  '${StorageConstants.productsBoxProductsPrefix}'
+  '${StorageConstants.productsBoxFeaturedProductsPrefix}'
+  '$limit:';
+
+
   bool _isSingleProductKey(String key) {
     if (!key.startsWith(StorageConstants.productsBoxProductPrefix)) {
       return false;
@@ -723,4 +935,5 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
     }
     return products;
   }
+  
 }

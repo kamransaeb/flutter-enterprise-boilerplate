@@ -1,5 +1,7 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter_enterprise_boilerplate/features/products/domain/entities/product_category.dart';
 import 'package:flutter_enterprise_boilerplate/features/products/domain/entities/product_filter.dart';
+import 'package:flutter_enterprise_boilerplate/features/products/domain/entities/product_review.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../entities/product.dart';
@@ -52,31 +54,28 @@ abstract class ProductRepository {
   });
   
   // Favorite operations
-  Future<Either<Failure, void>> toggleFavorite(String productId);
+  Future<Either<Failure, void>> toggleWishlist(String productId);
   
-  Future<Either<Failure, List<Product>>> getFavorites({
+  Future<Either<Failure, List<Product>>> getWishlist({
     int page,
     int limit,
   });
+
+  Future<Either<Failure, void>> addToWishlist(String productId);
+  Future<Either<Failure, void>> removeFromWishlist(String productId);
   
-  // Search operations
-  Future<Either<Failure, List<Product>>> searchProducts(
-    String query, {
-    int page,
-    int limit,
-  });
   
   // Recently viewed
   Future<Either<Failure, List<Product>>> getRecentlyViewed({
     int limit,
   });
   
-  // Analytics
-  Future<Either<Failure, void>> trackProductView(String productId);
+  // // Analytics
+  // Future<Either<Failure, void>> trackProductView(String productId);
   
-  // Streams
-  Stream<List<Product>> watchProducts();
-  Stream<List<Product>> watchFavorites();
+  // // Streams
+  // Stream<List<Product>> watchProducts();
+  // Stream<List<Product>> watchWishList();
   
   // Cache management
   Future<Either<Failure, void>> clearCache();

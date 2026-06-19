@@ -10,14 +10,20 @@ class StorageConstants {
   static const String settingsBox = 'settings_box';
   static const String cacheBox = 'cache_box';
   
-  static const String productsBoxCategoriesKey = 'products_categories_key';
+  // static const String productsBoxCategoriesKey = 'products_categories_key';
   static const String productsBox = 'products_box';
-  static const String productsBoxRecentlyViewedKey = 'products_recently_viewed_key';
-  static const String productsBoxWishlistKey = 'products_wishlist_key';
+  // static const String productsBoxRecentlyViewedKey = 'products_recently_viewed_key';
+  // static const String productsBoxWishlistKey = 'products_wishlist_key';
   static const String productsBoxProductPrefix = 'product:';
   static const String productsBoxReviewsPrefix = 'reviews:';
   static const String productsBoxProductsPrefix = 'products:';
   static const String productsBoxPagePrefix = 'page:';
+  static const String productsBoxWishlistPrefix = 'wishlist:';
+  static const String productsBoxRelatedProductsPrefix = 'related_products:';
+  static const String productsBoxFeaturedProductsPrefix = 'featured_products:';
+  static const String productsBoxCategoriesPrefix = 'categories:';
+  static const String productsBoxRecentlyViewedPrefix = 'recently_viewed:';
+
   static const String productsBoxLimitPrefix = 'limit:';
   static const String productsBoxFilterPrefix = 'filter:';
 

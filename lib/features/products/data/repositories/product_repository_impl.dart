@@ -45,7 +45,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final apiResponse = await _remoteDataSource.getProducts(
         page: page,
         limit: limit,
-        category: filter?.categories?.firstOrNull,
+        category: filter?.categories.firstOrNull,
         searchQuery: filter?.searchQuery,
         minPrice: filter?.minPrice,
         maxPrice: filter?.maxPrice,
@@ -95,60 +95,8 @@ class ProductRepositoryImpl implements ProductRepository {
       );
       if (apiResponse.isSuccess && apiResponse.hasData) {
         await _localDataSource.cacheProduct(apiResponse.data!);
-        await _localDataSource.addToRecentlyViewed(apiResponse.data!);
+        await _localDataSource.addToCachedRecentlyViewed(apiResponse.data!);
         return Right(apiResponse.data!.toEntity());
-      }
-      return Left(
-        ServerFailure(
-          code: apiResponse.error?.code,
-          message: apiResponse.error?.message ?? 'An unknown error occurred',
-          statusCode: apiResponse.statusCode,
-        ),
-      );
-    } catch (e, stackTrace) {
-      return Left(ErrorHandler.handleError(e, stackTrace: stackTrace));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<Product>>> getFeaturedProducts({
-    int limit = 10,
-  }) async {
-    try {
-      final apiResponse = await _remoteDataSource.getFeaturedProducts(
-        limit: limit,
-      );
-
-      if (apiResponse.isSuccess && apiResponse.hasData) {
-        return Right(
-          apiResponse.data!.map((model) => model.toEntity()).toList(),
-        );
-      }
-
-      return Left(
-        ServerFailure(
-          code: apiResponse.error?.code,
-          message: apiResponse.error?.message ?? 'An unknown error occurred',
-          statusCode: apiResponse.statusCode,
-        ),
-      );
-    } catch (e, stackTrace) {
-      return Left(ErrorHandler.handleError(e, stackTrace: stackTrace));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<ProductCategory>>> getCategories({
-    String? parentId,
-  }) async {
-    try {
-      final apiResponse = await _remoteDataSource.getCategories(
-        parentId: parentId,
-      );
-      if (apiResponse.isSuccess && apiResponse.hasData) {
-        return Right(
-          apiResponse.data!.map((model) => model.toEntity()).toList(),
-        );
       }
       return Left(
         ServerFailure(
@@ -169,6 +117,15 @@ class ProductRepositoryImpl implements ProductRepository {
     int limit = 20,
   }) async {
     try {
+      final cachedReviews = await _localDataSource.getCachedProductReviews(
+        productId: productId,
+        page: page,
+        limit: limit,
+      );
+      if (cachedReviews.isNotEmpty) {
+        return Right(cachedReviews.map((model) => model.toEntity()).toList());
+      }
+
       final apiResponse = await _remoteDataSource.getProductReviews(
         productId: productId,
         page: page,
@@ -197,6 +154,8 @@ class ProductRepositoryImpl implements ProductRepository {
     required String productId,
     required double rating,
     required String comment,
+    int page = 1,
+    int limit = 20,
   }) async {
     try {
       final apiResponse = await _remoteDataSource.addProductReview(
@@ -211,8 +170,13 @@ class ProductRepositoryImpl implements ProductRepository {
           createdAt: DateTime.now(),
         ),
       );
-
       if (apiResponse.isSuccess && apiResponse.hasData) {
+        await _localDataSource.addToCachedProductReviews(
+          productId: productId,
+          review: apiResponse.data!,
+          page: page,
+          limit: limit,
+        );
         return Right(apiResponse.data!.toEntity());
       }
       return Left(
@@ -228,71 +192,99 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Either<Failure, void>> toggleFavorite(String productId) async {
+  Future<Either<Failure, void>> toggleWishlist(String productId) async {
     try {
+      final wasInWishlist = await _localDataSource.isInCachedWishlist(
+        productId,
+      );
+
       // Update locally first for immediate feedback
-      await _localDataSource.toggleFavorite(productId);
+      if (wasInWishlist) {
+        await _localDataSource.removeFromCachedWishlist(productId);
+      } else {
+        await _localDataSource.addToCachedWishlist(productId);
+      }
+      //await _localDataSource.toggleCachedWishlist(productId);
 
       // Sync with remote
-      await _remoteDataSource.toggleFavorite(productId);
-
-      return const Right(null);
-    } catch (e) {
-      // If remote fails, revert local change
-      await _localDataSource.toggleFavorite(productId);
-      return Left(_handleError(e));
+      final apiResponse = await _remoteDataSource.toggleWishlist(
+        productId: productId,
+      );
+      if (apiResponse.isSuccess) {
+        return const Right(null);
+      }
+      //*** IMPORTANT: Revert local change if remote fails
+      if (wasInWishlist) {
+        await _localDataSource.addToCachedWishlist(productId);
+      } else {
+        await _localDataSource.removeFromCachedWishlist(productId);
+      }
+      return Left(
+        ServerFailure(
+          code: apiResponse.error?.code,
+          message: apiResponse.error?.message ?? 'Failed to toggle favorite',
+          statusCode: apiResponse.statusCode,
+        ),
+      );
+    } catch (e, stackTrace) {
+      return Left(ErrorHandler.handleError(e, stackTrace: stackTrace));
     }
   }
 
   @override
-  Future<Either<Failure, List<Product>>> getFavorites({
+  Future<Either<Failure, List<Product>>> getWishlist({
     int page = 1,
     int limit = 20,
   }) async {
     try {
       // Get from local cache first
-      final localFavorites = await _localDataSource.getFavorites();
-      if (localFavorites.isRight()) {
-        return localFavorites;
+      final cachedWishlist = await _localDataSource.getCachedWishlist();
+      if (cachedWishlist.isNotEmpty) {
+        return Right(cachedWishlist.map((model) => model.toEntity()).toList());
       }
-
       // Get from remote
-      final remoteFavorites = await _remoteDataSource.getFavorites(
+      final apiResponse = await _remoteDataSource.getWishlist(
         page: page,
         limit: limit,
       );
-      final favorites = remoteFavorites
-          .map((model) => model.toEntity())
-          .toList();
-      return Right(favorites);
-    } catch (e) {
-      return Left(_handleError(e));
+      if (apiResponse.isSuccess && apiResponse.hasData) {
+        await _localDataSource.cacheWishlist(apiResponse.data!);
+        return Right(
+          apiResponse.data!.map((model) => model.toEntity()).toList(),
+        );
+      }
+      return Left(
+        ServerFailure(
+          code: apiResponse.error?.code,
+          message: apiResponse.error?.message ?? 'Failed to get wishlist',
+          statusCode: apiResponse.statusCode,
+        ),
+      );
+    } catch (e, stackTrace) {
+      // Try local search first for quick results
+      return Left(ErrorHandler.handleError(e, stackTrace: stackTrace));
     }
   }
 
   @override
-  Future<Either<Failure, List<Product>>> searchProducts(
-    String query, {
-    int page = 1,
-    int limit = 20,
-  }) async {
+  Future<Either<Failure, void>> addToWishlist(String productId) async {
     try {
-      // Try local search first for quick results
-      final localResults = await _localDataSource.searchProducts(query);
-      if (localResults.isRight() && localResults.asRight().isNotEmpty) {
-        return localResults;
-      }
+      await _localDataSource.addToCachedWishlist(productId);
+      await _remoteDataSource.addToWishlist(productId: productId);
+      return const Right(null);
+    } catch (e, stackTrace) {
+      return Left(ErrorHandler.handleError(e, stackTrace: stackTrace));
+    }
+  }
 
-      // Get from remote
-      final remoteResults = await _remoteDataSource.searchProducts(
-        query,
-        page: page,
-        limit: limit,
-      );
-      final results = remoteResults.map((model) => model.toEntity()).toList();
-      return Right(results);
-    } catch (e) {
-      return Left(_handleError(e));
+  @override
+  Future<Either<Failure, void>> removeFromWishlist(String productId) async {
+    try {
+      await _localDataSource.removeFromCachedWishlist(productId);
+      await _remoteDataSource.removeFromWishlist(productId: productId);
+      return const Right(null);
+    } catch (e, stackTrace) {
+      return Left(ErrorHandler.handleError(e, stackTrace: stackTrace));
     }
   }
 
@@ -301,14 +293,33 @@ class ProductRepositoryImpl implements ProductRepository {
     int limit = 10,
   }) async {
     try {
-      final localResults = await _localDataSource.getRecentlyViewed();
-      if (localResults.isRight()) {
-        final products = localResults.asRight().take(limit).toList();
-        return Right(products);
+      final cachedRecentlyViewed = await _localDataSource
+          .getCachedRecentlyViewed();
+      if (cachedRecentlyViewed.isNotEmpty) {
+        return Right(
+          cachedRecentlyViewed.map((model) => model.toEntity()).toList(),
+        );
       }
-      return const Right([]);
-    } catch (e) {
-      return Left(_handleError(e));
+      final apiResponse = await _remoteDataSource.getRecentlyViewed(
+        limit: limit,
+      );
+      if (apiResponse.isSuccess && apiResponse.hasData) {
+        await _localDataSource.cacheRecentlyViewed(apiResponse.data!);
+        return Right(
+          apiResponse.data!.map((model) => model.toEntity()).toList(),
+        );
+      }
+      return Left(
+        ServerFailure(
+          code: apiResponse.error?.code,
+          message:
+              apiResponse.error?.message ??
+              'Failed to get recently viewed products',
+          statusCode: apiResponse.statusCode,
+        ),
+      );
+    } catch (e, stackTrace) {
+      return Left(ErrorHandler.handleError(e, stackTrace: stackTrace));
     }
   }
 
