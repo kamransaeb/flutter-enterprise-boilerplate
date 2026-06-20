@@ -56,8 +56,7 @@ targets:
       retrofit_generator:
         enabled: true
         generate_for:
-          - lib/features/**/data/datasources/*_data_source.dart
-          - lib/infrastructure/network/client/api_client.dart   # add this
+          - lib/features/**/data/api/*_api_client.dart
         options:
           auto_cast_response: true
 

@@ -27,6 +27,7 @@ import '../../core/bloc/connectivity/connectivity_bloc.dart' as _i1027;
 import '../../core/bloc/theme/theme_bloc.dart' as _i339;
 import '../../core/navigation/app_router.dart' as _i400;
 import '../../core/utils/helpers/network_helper.dart' as _i675;
+import '../../features/auth/data/api/auth_api_client.dart' as _i541;
 import '../../features/auth/data/datasources/auth_local_data_source.dart'
     as _i852;
 import '../../features/auth/data/datasources/auth_local_data_source_impl.dart'
@@ -54,6 +55,7 @@ import '../../features/auth/domain/usecases/reset_password_usecase.dart'
 import '../../features/auth/domain/usecases/social_login_usecase.dart' as _i449;
 import '../../features/auth/domain/usecases/verify_email_usecase.dart' as _i30;
 import '../../features/auth/presentation/bloc/auth_bloc.dart' as _i797;
+import '../../features/products/data/api/product_api_client.dart' as _i865;
 import '../../features/products/data/datasources/product_local_data_source.dart'
     as _i823;
 import '../../features/products/data/datasources/product_local_data_source_impl.dart'
@@ -244,6 +246,12 @@ Future<_i174.GetIt> $initGetIt(
   );
   gh.singleton<_i31.NavigationService>(
     () => _i31.NavigationService(gh<_i400.AppRouter>()),
+  );
+  gh.singleton<_i541.AuthApiClient>(
+    () => _i541.AuthApiClient(gh<_i870.DioClient>()),
+  );
+  gh.singleton<_i865.ProductApiClient>(
+    () => _i865.ProductApiClient(gh<_i870.DioClient>()),
   );
   gh.singleton<_i211.ApiClient>(() => _i211.ApiClient(gh<_i870.DioClient>()));
   gh.singleton<_i492.AppBlocObserver>(

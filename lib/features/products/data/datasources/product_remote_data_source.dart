@@ -28,7 +28,7 @@ abstract class ProductRemoteDataSource {
   Future<ApiResponse<ProductModel>> getProductById({required String productId});
 
   // Get featured products
-  Future<ApiResponse<List<ProductModel>>> getFeaturedProducts({int limit = 10});
+  Future<ApiResponse<List<ProductModel>>> getFeaturedProducts({required int limit});
 
   // Get related products
   Future<ApiResponse<List<ProductCategoryModel>>> getCategories(
