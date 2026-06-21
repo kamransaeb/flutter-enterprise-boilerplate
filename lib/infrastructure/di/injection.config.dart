@@ -55,6 +55,8 @@ import '../../features/auth/domain/usecases/reset_password_usecase.dart'
 import '../../features/auth/domain/usecases/social_login_usecase.dart' as _i449;
 import '../../features/auth/domain/usecases/verify_email_usecase.dart' as _i30;
 import '../../features/auth/presentation/bloc/auth_bloc.dart' as _i797;
+import '../../features/order/data/api/order_api_client.dart' as _i1026;
+import '../../features/payments/data/api/payments_api_client.dart' as _i867;
 import '../../features/products/data/api/product_api_client.dart' as _i865;
 import '../../features/products/data/datasources/product_local_data_source.dart'
     as _i823;
@@ -75,6 +77,7 @@ import '../../features/products/domain/usecases/search_product_usecase.dart'
 import '../../features/products/domain/usecases/toggle_favorite_usecase.dart'
     as _i270;
 import '../../features/products/presentation/bloc/products_bloc.dart' as _i975;
+import '../../features/user/data/api/user_api_client.dart' as _i240;
 import '../cache/cache_manager.dart' as _i326;
 import '../cache/cache_manager_impl.dart' as _i536;
 import '../network/client/api_client.dart' as _i211;
@@ -250,8 +253,17 @@ Future<_i174.GetIt> $initGetIt(
   gh.singleton<_i541.AuthApiClient>(
     () => _i541.AuthApiClient(gh<_i870.DioClient>()),
   );
+  gh.singleton<_i1026.OrderApiClient>(
+    () => _i1026.OrderApiClient(gh<_i870.DioClient>()),
+  );
+  gh.singleton<_i867.PaymentsApiClient>(
+    () => _i867.PaymentsApiClient(gh<_i870.DioClient>()),
+  );
   gh.singleton<_i865.ProductApiClient>(
     () => _i865.ProductApiClient(gh<_i870.DioClient>()),
+  );
+  gh.singleton<_i240.UserApiClient>(
+    () => _i240.UserApiClient(gh<_i870.DioClient>()),
   );
   gh.singleton<_i211.ApiClient>(() => _i211.ApiClient(gh<_i870.DioClient>()));
   gh.singleton<_i492.AppBlocObserver>(
