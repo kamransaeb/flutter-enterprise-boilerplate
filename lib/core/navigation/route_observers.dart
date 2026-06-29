@@ -2,15 +2,15 @@ import 'package:auto_route/auto_route.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_enterprise_boilerplate/core/navigation/app_router.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/firebase/firebase_service.dart';
 import 'package:flutter_enterprise_boilerplate/core/navigation/route_utils.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 
 
 class AppRouteObserver extends AutoRouterObserver {
+  final LoggerService _logger = getIt<LoggerService>();
   final FirebaseService _firebaseService = getIt<FirebaseService>();
 
   @override
@@ -42,13 +42,13 @@ class AppRouteObserver extends AutoRouterObserver {
   @override
   void didStartUserGesture(Route route, Route? previousRoute) {
     super.didStartUserGesture(route, previousRoute);
-    logger.d('Route gesture started: ${RouteUtils.getRouteName(route)}');
+    _logger.d('Route gesture started: ${RouteUtils.getRouteName(route)}');
   }
 
   @override
   void didStopUserGesture() {
     super.didStopUserGesture();
-    logger.d('Route gesture stopped');
+    _logger.d('Route gesture stopped');
   }
 
 
@@ -68,7 +68,7 @@ class AppRouteObserver extends AutoRouterObserver {
     final routeName = RouteUtils.getRouteName(route);
     final previousRouteName = previousRoute != null ? RouteUtils.getRouteName(previousRoute) : null;
     final arguments = RouteUtils.getRouteArguments(route);
-    logger.d('RouteObserver[$action]: $routeName from $previousRouteName with arguments: ${((arguments['hasArguments'] as bool?) ?? false) ? arguments['argumentType'] : 'none'}');
+    _logger.d('RouteObserver[$action]: $routeName from $previousRouteName with arguments: ${((arguments['hasArguments'] as bool?) ?? false) ? arguments['argumentType'] : 'none'}');
     // Track screen view for analytics on push or replace
     if (action == 'push' || action == 'replace') { 
       _firebaseService.logScreenView(
@@ -95,7 +95,7 @@ class AppRouteObserver extends AutoRouterObserver {
     final routeName = route.name;
     final previousRouteName = previousRoute?.name;
     final routePath = route.path;
-    logger.d('TabRouteObserver[$action]: $routeName from $previousRouteName');
+    _logger.d('TabRouteObserver[$action]: $routeName from $previousRouteName');
     // Track tab change
     _firebaseService.logEvent(
       name: 'tab_changed',
@@ -124,6 +124,7 @@ class AppRouteObserver extends AutoRouterObserver {
 
 /// Performance Route Observer
 class PerformanceRouteObserver extends AutoRouterObserver {
+  final LoggerService _logger = getIt<LoggerService>();
   final Map<String, DateTime> _routeStartTimes = {};
 
   @override
@@ -141,7 +142,7 @@ class PerformanceRouteObserver extends AutoRouterObserver {
 
     if (startTime != null) {
       final duration = DateTime.now().difference(startTime);
-      logger.d('PerformanceRouteObserver[pop]: $routeName was active ${duration.inMilliseconds}ms');
+      _logger.d('PerformanceRouteObserver[pop]: $routeName was active ${duration.inMilliseconds}ms');
       _routeStartTimes.remove(routeName);
     }
   }
@@ -149,23 +150,27 @@ class PerformanceRouteObserver extends AutoRouterObserver {
 
 /// Authentication Route Observer
 class AuthRouteObserver extends AutoRouterObserver {
+  final LoggerService _logger = getIt<LoggerService>();
+
   @override
   void didPush(Route route, Route? previousRoute) {
     super.didPush(route, previousRoute);
     if (route.settings.name?.contains('Login') == true || 
     route.settings.name?.contains('Register') == true) {
-     logger.d('Auth route accessed [push]: ${route.settings.name}');
+     _logger.d('Auth route accessed [push]: ${route.settings.name}');
     }
   }
 }
 
 /// Deep Link Route Observer
 class DeepLinkRouteObserver extends AutoRouterObserver {
+  final LoggerService _logger = getIt<LoggerService>();
+
   @override
   void didPush(Route route, Route? previousRoute) {
     super.didPush(route, previousRoute);
     if (route.settings.name?.contains('DeepLink') == true) {
-      logger.d('DeepLink route accessed [push]: ${route.settings.name}');
+      _logger.d('DeepLink route accessed [push]: ${route.settings.name}');
     }
   }
 }
@@ -216,6 +221,7 @@ class RouteMonitor extends StatefulWidget {
 }
 
 class _RouteMonitorState extends State<RouteMonitor> {
+  final LoggerService _logger = getIt<LoggerService>();
   String? _currentRoute;
 
   @override
@@ -231,7 +237,7 @@ class _RouteMonitorState extends State<RouteMonitor> {
         final router = AutoRouter.of(context);
         _currentRoute = router.current.name;
       } catch (e) {
-        logger.e('Error setting up route listener: $e');
+        _logger.e('Error setting up route listener: $e');
       }
     }
    }); 
@@ -251,7 +257,7 @@ class _RouteMonitorState extends State<RouteMonitor> {
       if (_currentRoute != newRoute) {
         _currentRoute = newRoute;
         widget.onRouteChanged?.call(newRoute);
-        logger.d('Route changed: $_currentRoute -> $newRoute');
+        _logger.d('Route changed: $_currentRoute -> $newRoute');
         // Track analytics for route change
         getIt<FirebaseService>().logEvent(
           name: 'route_changed',
@@ -262,7 +268,7 @@ class _RouteMonitorState extends State<RouteMonitor> {
         );
       }
     } catch (e) {
-      logger.e('Error updating route listener: $e');
+      _logger.e('Error updating route listener: $e');
     }
   }
 }

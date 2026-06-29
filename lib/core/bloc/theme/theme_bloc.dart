@@ -1,11 +1,11 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_enterprise_boilerplate/core/themes/app_theme.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 part 'theme_event.dart';
 part 'theme_state.dart';
@@ -14,6 +14,7 @@ part 'theme_bloc.freezed.dart';
 
 @singleton
 class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
+  final LoggerService _logger;
   final LocalStorage _localStorage;
   
   static const String _themeStatusKey = 'app_theme_status';
@@ -23,7 +24,9 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
 
   ThemeBloc({
     @Named('hive_storage') required LocalStorage localStorage,
+    required LoggerService logger,
   })  : _localStorage = localStorage,
+        _logger = logger,
        
         super(ThemeState.initial()) {
     on<_EventLoaded>(_onEventLoaded);
@@ -41,7 +44,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     _EventLoaded event,
     Emitter<ThemeState> emit,
   ) async {
-    logger.d('ThemeBloc: Loading saved theme preferences');
+    _logger.d('ThemeBloc: Loading saved theme preferences');
     
     try {
       final savedThemeStatus = await _getSavedThemeStatus();
@@ -56,9 +59,9 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
         highContrast: savedHighContrast,
       ));
       
-      logger.i('ThemeBloc: Theme loaded - ${savedThemeStatus.displayName}');
+      _logger.i('ThemeBloc: Theme loaded - ${savedThemeStatus.displayName}');
     } catch (error, stackTrace) {
-      logger.e('ThemeBloc: Error loading theme', 
+      _logger.e('ThemeBloc: Error loading theme', 
           error: error, stackTrace: stackTrace);
       // Keep initial state on error
     }
@@ -68,14 +71,14 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     _EventChanged event,
     Emitter<ThemeState> emit,
   ) async {
-    logger.i('ThemeBloc: Changing theme to ${event.themeStatus.displayName}');
+    _logger.i('ThemeBloc: Changing theme to ${event.themeStatus.displayName}');
     
     try {
       await _saveThemeStatus(event.themeStatus);
       emit(state.copyWith(currentThemeStatus: event.themeStatus));
-      logger.d('ThemeBloc: Theme changed successfully');
+      _logger.d('ThemeBloc: Theme changed successfully');
     } catch (error, stackTrace) {
-      logger.e('ThemeBloc: Error saving theme', 
+      _logger.e('ThemeBloc: Error saving theme', 
           error: error, stackTrace: stackTrace);
     }
   }
@@ -85,7 +88,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     Emitter<ThemeState> emit,
   ) async {
     final newThemeStatus = _getNextThemeStatus(state.currentThemeStatus);
-    logger.d('ThemeBloc: Toggling theme to ${newThemeStatus.displayName}');
+    _logger.d('ThemeBloc: Toggling theme to ${newThemeStatus.displayName}');
     add(ThemeEvent.changed(themeStatus: newThemeStatus));
   }
 
@@ -93,14 +96,14 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     _EventDynamicColorToggled event,
     Emitter<ThemeState> emit,
   ) async {
-    logger.d('ThemeBloc: Setting dynamic color to ${event.enabled}');
+    _logger.d('ThemeBloc: Setting dynamic color to ${event.enabled}');
     
     try {
       await _saveDynamicColor(event.enabled);
       emit(state.copyWith(useDynamicColor: event.enabled));
-      logger.d('ThemeBloc: Dynamic color updated');
+      _logger.d('ThemeBloc: Dynamic color updated');
     } catch (error, stackTrace) {
-      logger.e('ThemeBloc: Error saving dynamic color setting',
+      _logger.e('ThemeBloc: Error saving dynamic color setting',
           error: error, stackTrace: stackTrace);
     }
   }
@@ -110,14 +113,14 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     Emitter<ThemeState> emit,
   ) async {
     final clampedScale = event.scale.clamp(0.8, 1.5);
-    logger.d('ThemeBloc: Scaling font size to $clampedScale');
+    _logger.d('ThemeBloc: Scaling font size to $clampedScale');
     
     try {
       await _saveFontSize(clampedScale);
       emit(state.copyWith(fontSizeScale: clampedScale));
-        logger.d('ThemeBloc: Font size updated');
+        _logger.d('ThemeBloc: Font size updated');
     } catch (error, stackTrace) {
-      logger.e('ThemeBloc: Error saving font size setting',
+      _logger.e('ThemeBloc: Error saving font size setting',
           error: error, stackTrace: stackTrace);
     }
   }
@@ -126,14 +129,14 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     _EventHighContrastToggled event,
     Emitter<ThemeState> emit,
   ) async {
-    logger.d('ThemeBloc: Setting high contrast to ${event.enabled}');
+    _logger.d('ThemeBloc: Setting high contrast to ${event.enabled}');
     
     try {
       await _saveHighContrast(event.enabled);
       emit(state.copyWith(highContrast: event.enabled));
-      logger.d('ThemeBloc: High contrast updated');
+      _logger.d('ThemeBloc: High contrast updated');
     } catch (error, stackTrace) {
-      logger.e('ThemeBloc: Error saving high contrast setting',
+      _logger.e('ThemeBloc: Error saving high contrast setting',
           error: error, stackTrace: stackTrace);
     }
   }
@@ -142,14 +145,14 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     _EventResetToDefault event,
     Emitter<ThemeState> emit,
   ) async {
-    logger.i('ThemeBloc: Resetting theme to default');
+    _logger.i('ThemeBloc: Resetting theme to default');
     
     try {
       await _clearThemeSettings();
       emit(const ThemeState.initial());
-      logger.d('ThemeBloc: Theme reset successfully');
+      _logger.d('ThemeBloc: Theme reset successfully');
     } catch (error, stackTrace) {
-      logger.e('ThemeBloc: Error resetting theme',
+      _logger.e('ThemeBloc: Error resetting theme',
           error: error, stackTrace: stackTrace);
     }
   }

@@ -12,7 +12,6 @@ import 'package:flutter_enterprise_boilerplate/core/widgets/common/app_lifecycle
 import 'package:flutter_enterprise_boilerplate/core/widgets/connectivity/connectivity_listener.dart';
 import 'package:flutter_enterprise_boilerplate/core/widgets/locale_listener.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,6 +22,7 @@ import '../features/auth/presentation/bloc/auth_bloc.dart';
 // import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'app_bloc_observer.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 class AppWidget extends StatefulWidget {
   const AppWidget({super.key});
@@ -32,6 +32,7 @@ class AppWidget extends StatefulWidget {
 }
 
 class _AppWidgetState extends State<AppWidget> {
+  late final LoggerService _logger = getIt<LoggerService>();
   late final AppConfig _appConfig;
   late final AppRouter _appRouter;
   late final AppLifecycleObserver _appLifecycleObserver;
@@ -39,7 +40,7 @@ class _AppWidgetState extends State<AppWidget> {
   @override
   void initState() {
     super.initState();
-    logger.i(
+    _logger.i(
       'AppWidget: AppRouter registered: ${getIt.isRegistered<AppRouter>()}',
     );
     _appRouter = getIt.isRegistered<AppRouter>()
@@ -49,12 +50,12 @@ class _AppWidgetState extends State<AppWidget> {
     final _appLifecycleBloc = context.read<AppLifecycleBloc>();
     _appLifecycleObserver = AppLifecycleObserver(_appLifecycleBloc);
     WidgetsBinding.instance.addObserver(_appLifecycleObserver);
-    logger.i('AppWidget: Initialized');
+    _logger.i('AppWidget: Initialized');
   }
 
   @override
   void dispose() {
-    logger.i('AppWidget: Disposed');
+    _logger.i('AppWidget: Disposed');
     WidgetsBinding.instance.removeObserver(_appLifecycleObserver);
     super.dispose();
   }

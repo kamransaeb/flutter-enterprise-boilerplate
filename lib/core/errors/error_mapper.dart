@@ -1,5 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'failures.dart';
 
@@ -15,189 +15,168 @@ class ErrorMapper {
   // ============================================================================
 
   /// Convert failure to user-friendly message
-  static String toUserMessage(
-    Failure failure, {
-    BuildContext? context,
-    AppLocalizations? l10n,
-  }) {
-    // Use provided l10n or get from context
-    final localizations = l10n ?? (context != null ? AppLocalizations.of(context) : null);
-
+  static String toUserMessage(Failure failure) {
     // Map failure types to user messages
     switch (failure.runtimeType) {
       // Network failures
       case NetworkFailure:
-        return _mapNetworkFailure(failure as NetworkFailure, localizations);
-      
+        return _mapNetworkFailure(failure as NetworkFailure);
+
       case NoInternetConnectionFailure:
-        return localizations?.noInternetError ?? 
-            'No internet connection. Please check your network.';
-      
+        return 'no_internet_error'.tr();
+
       case ConnectionTimeoutFailure:
-        return localizations?.connectionTimeoutError ?? 
-            'Connection timeout. Please try again.';
-      
+        return 'connection_timeout_error'.tr();
+
       case DnsResolutionFailure:
-        return localizations?.dnsResolutionError ?? 
-            'Unable to resolve server address.';
+        return 'dns_resolution_error'.tr();
       
       case SslFailure:
-        return localizations?.sslError ?? 
-            'Secure connection failed. Please check your internet connection.';
-      
+        return 'ssl_error'.tr();
+    
       case HttpStatusFailure:
-        return _mapHttpStatusFailure(failure as HttpStatusFailure, localizations);
-      
+        return _mapHttpStatusFailure(failure as HttpStatusFailure);
+
       case RequestCancelledFailure:
-        return localizations?.requestCancelledError ?? 
-            'Request was cancelled.';
-      
+        return 'request_cancelled_error'.tr();
+
       case ResponseParsingFailure:
-        return localizations?.responseParsingError ?? 
-            'Unable to process server response.';
-      
+        return 'response_parsing_error'.tr();
+
       case RateLimitExceededFailure:
-        return localizations?.rateLimitError ?? 
-            'Too many requests. Please try again later.';
-      
+        return 'rate_limit_error'.tr();      
+
       case WebSocketFailure:
-        return localizations?.webSocketError ?? 
-            'Connection lost. Please reconnect.';
+        return 'web_socket_error'.tr();        
 
       // Serialization failures
       case JsonSerializationFailure:
-        return _mapJsonSerializationFailure(failure as JsonSerializationFailure, localizations);
-      
+        return _mapJsonSerializationFailure(
+          failure as JsonSerializationFailure,
+        );
+
       case ModelConversionFailure:
-        return localizations?.dataConversionError ?? 
-            'Unable to process data. Please try again.';
-      
+        return 'data_conversion_error'.tr();
+
       case HiveSerializationFailure:
-        return localizations?.storageReadError ?? 
-            'Unable to read saved data.';
-      
+        return 'storage_read_error'.tr();
+
       case EncodingFailure:
-        return localizations?.encodingError ?? 
-            'Unable to process data encoding.';
-      
+        return 'encoding_error'.tr();        
+
       case DateSerializationFailure:
-        return localizations?.dateFormatError ?? 
-            'Invalid date format.';
-      
+        return 'date_format_error'.tr();        
+
       case EnumSerializationFailure:
-        return localizations?.invalidValueError ?? 
-            'Invalid value received.';
+        return 'invalid_value_error'.tr();        
 
       // Device failures
       case HardwareNotAvailableFailure:
-        return _mapHardwareFailure(failure as HardwareNotAvailableFailure, localizations);
-      
+        return _mapHardwareFailure(failure as HardwareNotAvailableFailure);
+
       case SensorFailure:
-        return _mapSensorFailure(failure as SensorFailure, localizations);
-      
+        return _mapSensorFailure(failure as SensorFailure);
+
       case BiometricFailure:
-        return _mapBiometricFailure(failure as BiometricFailure, localizations);
-      
+        return _mapBiometricFailure(failure as BiometricFailure);
+
       case CameraFailure:
-        return _mapCameraFailure(failure as CameraFailure, localizations);
-      
+        return _mapCameraFailure(failure as CameraFailure);
+
       case MicrophoneFailure:
-        return _mapMicrophoneFailure(failure as MicrophoneFailure, localizations);
-      
+        return _mapMicrophoneFailure(failure as MicrophoneFailure);
+
       case LocationFailure:
-        return _mapLocationFailure(failure as LocationFailure, localizations);
-      
+        return _mapLocationFailure(failure as LocationFailure);
+
       case BluetoothFailure:
-        return _mapBluetoothFailure(failure as BluetoothFailure, localizations);
-      
+        return _mapBluetoothFailure(failure as BluetoothFailure);
+
       case BatteryFailure:
-        return _mapBatteryFailure(failure as BatteryFailure, localizations);
-      
+        return _mapBatteryFailure(failure as BatteryFailure);
+
       case StorageDeviceFailure:
-        return _mapStorageFailure(failure as StorageDeviceFailure, localizations);
-      
+        return _mapStorageFailure(failure as StorageDeviceFailure);
+
       case DisplayFailure:
-        return _mapDisplayFailure(failure as DisplayFailure, localizations);
+        return _mapDisplayFailure(failure as DisplayFailure);
 
       // Server failures
       case ServerFailure:
-        return _mapServerFailure(failure as ServerFailure, localizations);
+        return _mapServerFailure(failure as ServerFailure);
 
       // Authentication failures
       case UnauthorizedAccessFailure:
-        return localizations?.unauthorizedError ??
-            'Your session has expired. Please login again.';
+        return 'unauthorized_error'.tr();
 
       case InvalidCredentialsFailure:
-        return localizations?.invalidCredentialsError ??
-            'Invalid email or password.';
+        return 'invalid_credentials_error'.tr();
+
 
       case EmailNotVerifiedFailure:
-        return localizations?.emailNotVerifiedError ??
-            'Please verify your email address before logging in.';
+        return 'email_not_verified_error'.tr();
+
 
       case AccountLockedFailure:
         final lockedFailure = failure as AccountLockedFailure;
-        return localizations?.accountLockedError(
-              lockedFailure.remainingTime.inMinutes,
-            ) ??
-            'Account temporarily locked. Try again in ${lockedFailure.remainingTime.inMinutes} minutes.';
+        return 'account_locked_error'.tr(
+          args: [lockedFailure.remainingTime.inMinutes.toString()],
+        );
 
       case AccountDisabledFailure:
-        return localizations?.accountDisabledError ??
-            'Your account has been disabled. Please contact support.';
+        return 'account_disabled_error'.tr();
 
       // Validation failures
       case ValidationFailure:
-        return _mapValidationFailure(failure as ValidationFailure, localizations);
+        return _mapValidationFailure(failure as ValidationFailure);
 
       case FormValidationFailure:
-        return localizations?.formValidationError ?? 'Please fix the errors in the form.';
+        return 'form_validation_error'.tr();
 
       // Permission failures
       case PermissionFailure:
-        return _mapPermissionFailure(failure as PermissionFailure, localizations);
+        return _mapPermissionFailure(failure as PermissionFailure);
 
       // File failures
       case FileNotFoundFailure:
-        return localizations?.fileNotFoundError ?? 'File not found.';
+        return 'file_not_found_error'.tr();
 
       case FileTooLargeFailure:
         final fileFailure = failure as FileTooLargeFailure;
-        return localizations?.fileTooLargeError(
-              _formatSize(fileFailure.fileSize),
-              _formatSize(fileFailure.maxSize),
-            ) ??
-            'File size (${_formatSize(fileFailure.fileSize)}) exceeds limit (${_formatSize(fileFailure.maxSize)}).';
+        return 'file_too_large_error'.tr(
+          namedArgs: {
+            'file_size': _formatSize(fileFailure.fileSize),
+            'max_size': _formatSize(fileFailure.maxSize),
+          },
+        );
 
       // Payment failures
       case PaymentDeclinedFailure:
         final paymentFailure = failure as PaymentDeclinedFailure;
         return paymentFailure.declineReason != null
             ? 'Payment declined: ${paymentFailure.declineReason}'
-            : localizations?.paymentDeclinedError ?? 'Payment was declined.';
+            : 'payment_declined_error'.tr();
 
       case InsufficientFundsFailure:
-        return localizations?.insufficientFundsError ?? 'Insufficient funds for this transaction.';
+        return 'insufficient_funds_error'.tr();
 
       // Business failures
       case NotFoundFailure:
-        return localizations?.resourceNotFoundError ?? 'Requested resource was not found.';
+        return 'resource_not_found_error'.tr();
 
       case AlreadyExistsFailure:
-        return localizations?.resourceAlreadyExistsError ?? 'Resource already exists.';
+        return 'resource_already_exists_error'.tr();
 
       case OperationNotAllowedFailure:
-        return localizations?.operationNotAllowedError ?? 'This operation is not allowed.';
+        return 'operation_not_allowed_error'.tr();
 
       // Third-party service failures
       case FirebaseFailure:
-        return localizations?.serviceUnavailableError ??
-            'Service temporarily unavailable. Please try again later.';
+        return 'service_unavailable_error'.tr();
 
       // Unknown failure
       default:
-        return localizations?.unknownError ?? 'An unexpected error occurred. Please try again.';
+        return 'unknown_error'.tr();
     }
   }
 
@@ -205,28 +184,28 @@ class ErrorMapper {
   // Network Message Mappers
   // ============================================================================
 
-  static String _mapNetworkFailure(NetworkFailure failure, AppLocalizations? l10n) {
+  static String _mapNetworkFailure(NetworkFailure failure) {
     if (failure.timeout) {
-      return l10n?.connectionTimeoutError ?? 'Connection timeout. Please try again.';
+      return 'connection_timeout_error'.tr();
     }
-    return l10n?.networkError ?? 'No internet connection. Please check your network.';
+    return 'network_error'.tr();
   }
 
-  static String _mapHttpStatusFailure(HttpStatusFailure failure, AppLocalizations? l10n) {
+  static String _mapHttpStatusFailure(HttpStatusFailure failure) {
     if (failure.isRateLimited) {
-      return l10n?.rateLimitError ?? 'Too many requests. Please try again later.';
+      return 'rate_limit_error'.tr();
     }
     if (failure.isAuthenticationError) {
-      return l10n?.unauthorizedError ?? 'Please login again.';
+      return 'unauthorized_error'.tr();
     }
     if (failure.isPermissionError) {
-      return l10n?.permissionDeniedError ?? 'You don\'t have permission for this action.';
+      return 'permission_denied_error'.tr();
     }
     if (failure.isNotFound) {
-      return l10n?.resourceNotFoundError ?? 'Resource not found.';
+      return 'resource_not_found_error'.tr();
     }
     if (failure.isServerError) {
-      return l10n?.serverError ?? 'Server error. Please try again later.';
+      return 'server_error'.tr();
     }
     return failure.message;
   }
@@ -235,188 +214,167 @@ class ErrorMapper {
   // Serialization Message Mappers
   // ============================================================================
 
-  static String _mapJsonSerializationFailure(JsonSerializationFailure failure, AppLocalizations? l10n) {
+  static String _mapJsonSerializationFailure(JsonSerializationFailure failure) {
     if (failure.jsonPath != null) {
-      return l10n?.invalidDataAtPathError(failure.jsonPath!) ??
-          'Invalid data at ${failure.jsonPath}. Please contact support.';
+      return 'invalid_data_at_path_error'.tr(args: [failure.jsonPath!]);
     }
-    return l10n?.invalidDataError ?? 'Unable to process data. Please try again.';
+    return 'invalid_data_error'.tr();
   }
 
   // ============================================================================
   // Device Message Mappers
   // ============================================================================
 
-  static String _mapHardwareFailure(HardwareNotAvailableFailure failure, AppLocalizations? l10n) {
+  static String _mapHardwareFailure(HardwareNotAvailableFailure failure) {
     final hardware = failure.deviceFeature ?? 'hardware';
-    return l10n?.hardwareNotAvailableError(hardware) ??
-        '$hardware is not available on this device.';
+    return 'hardware_not_available_error'.tr(args: [hardware]);
   }
 
-  static String _mapSensorFailure(SensorFailure failure, AppLocalizations? l10n) {
+  static String _mapSensorFailure(SensorFailure failure) {
     if (failure.code == 'SENSOR_NOT_AVAILABLE') {
-      return l10n?.sensorNotAvailableError(failure.deviceFeature ?? 'Sensor') ??
-          '${failure.deviceFeature ?? 'Sensor'} not available on this device.';
+      return 'sensor_not_available_error'.tr(
+        args: [failure.deviceFeature ?? 'Sensor'],
+      );
     }
     if (failure.code == 'SENSOR_PERMISSION_DENIED') {
-      return l10n?.sensorPermissionError(failure.deviceFeature ?? 'Sensor') ??
-          'Permission required for ${failure.deviceFeature ?? 'sensor'}.';
+      return 'sensor_permission_error'.tr(
+        args: [failure.deviceFeature ?? 'Sensor'],
+      );
     }
     return failure.message;
   }
 
-  static String _mapBiometricFailure(BiometricFailure failure, AppLocalizations? l10n) {
+  static String _mapBiometricFailure(BiometricFailure failure) {
     switch (failure.code) {
       case 'BIOMETRIC_NOT_AVAILABLE':
-        return l10n?.biometricNotAvailableError ??
-            'Biometric authentication is not available on this device.';
+        return 'biometric_not_available_error'.tr();
       case 'BIOMETRIC_NOT_ENROLLED':
-        return l10n?.biometricNotEnrolledError ??
-            'No biometrics enrolled. Please set up fingerprint or face ID in settings.';
+        return 'biometric_not_enrolled_error'.tr();
       case 'BIOMETRIC_LOCKED_OUT':
-        return l10n?.biometricLockedOutError ??
-            'Too many failed attempts. Biometric authentication is locked.';
+        return 'biometric_locked_out_error'.tr();
       case 'BIOMETRIC_AUTH_FAILED':
-        return l10n?.biometricAuthFailedError ??
-            'Authentication failed. Please try again.';
+        return 'biometric_auth_failed_error'.tr();
       default:
         return failure.message;
     }
   }
 
-  static String _mapCameraFailure(CameraFailure failure, AppLocalizations? l10n) {
+  static String _mapCameraFailure(CameraFailure failure) {
     switch (failure.code) {
       case 'CAMERA_NOT_AVAILABLE':
-        return l10n?.cameraNotAvailableError ??
-            'Camera is not available on this device.';
+        return 'camera_not_available_error'.tr();
       case 'CAMERA_IN_USE':
-        return l10n?.cameraInUseError ??
-            'Camera is already in use by another app.';
+        return 'camera_in_use_error'.tr();
       case 'CAMERA_PERMISSION_DENIED':
-        return l10n?.cameraPermissionError ??
-            'Camera permission is required to take photos.';
+        return 'camera_permission_error'.tr();
       default:
         return failure.message;
     }
   }
 
-  static String _mapMicrophoneFailure(MicrophoneFailure failure, AppLocalizations? l10n) {
+  static String _mapMicrophoneFailure(MicrophoneFailure failure) {
     switch (failure.code) {
       case 'MICROPHONE_NOT_AVAILABLE':
-        return l10n?.microphoneNotAvailableError ??
-            'Microphone is not available on this device.';
+        return 'microphone_not_available_error'.tr();
       case 'MICROPHONE_PERMISSION_DENIED':
-        return l10n?.microphonePermissionError ??
-            'Microphone permission is required for recording.';
+        return 'microphone_permission_error'.tr();
       case 'MICROPHONE_RECORDING_FAILED':
-        return l10n?.recordingFailedError ??
-            'Failed to start recording. Please try again.';
+        return 'recording_failed_error'.tr();
       default:
         return failure.message;
     }
   }
 
-  static String _mapLocationFailure(LocationFailure failure, AppLocalizations? l10n) {
+  static String _mapLocationFailure(LocationFailure failure) {
     switch (failure.code) {
       case 'LOCATION_SERVICES_DISABLED':
-        return l10n?.locationServicesDisabledError ??
-            'Location services are disabled. Please enable them in settings.';
+        return 'location_services_disabled_error'.tr();  
       case 'LOCATION_PERMISSION_DENIED':
-        return l10n?.locationPermissionError ??
-            'Location permission is required for this feature.';
+        return 'location_permission_error'.tr();
       case 'LOCATION_PERMISSION_PERMANENTLY_DENIED':
-        return l10n?.locationPermissionPermanentlyDeniedError ??
-            'Location permission permanently denied. Please enable it in settings.';
+        return 'location_permission_permanently_denied_error'.tr();
       case 'LOCATION_TIMEOUT':
-        return l10n?.locationTimeoutError ??
-            'Location request timed out. Please try again.';
+        return 'location_timeout_error'.tr();
       case 'LOCATION_UNAVAILABLE':
-        return l10n?.locationUnavailableError ??
-            'Unable to determine your location. Please try again.';
+        return 'location_unavailable_error'.tr();
       default:
         return failure.message;
     }
   }
 
-  static String _mapBluetoothFailure(BluetoothFailure failure, AppLocalizations? l10n) {
+  static String _mapBluetoothFailure(BluetoothFailure failure) {
     switch (failure.code) {
       case 'BLUETOOTH_NOT_AVAILABLE':
-        return l10n?.bluetoothNotAvailableError ??
-            'Bluetooth is not available on this device.';
+        return 'bluetooth_not_available_error'.tr();
       case 'BLUETOOTH_DISABLED':
-        return l10n?.bluetoothDisabledError ??
-            'Bluetooth is disabled. Please enable it in settings.';
+        return 'bluetooth_disabled_error'.tr();
       case 'BLUETOOTH_PERMISSION_DENIED':
-        return l10n?.bluetoothPermissionError ??
-            'Bluetooth permission is required.';
+        return 'bluetooth_permission_error'.tr();
       case 'BLUETOOTH_CONNECTION_FAILED':
-        return l10n?.bluetoothConnectionError(failure.deviceName ?? 'Device') ??
-            'Failed to connect to ${failure.deviceName ?? 'device'}.';
+        return 'bluetooth_connection_error'.tr(
+          args: [failure.deviceName ?? 'Device'],
+        );
       default:
         return failure.message;
     }
   }
 
-  static String _mapBatteryFailure(BatteryFailure failure, AppLocalizations? l10n) {
+  static String _mapBatteryFailure(BatteryFailure failure) {
     if (failure.batteryLevel != null) {
       if (failure.batteryLevel! <= 15) {
-        return l10n?.criticalBatteryError(failure.batteryLevel!) ??
-            'Critical battery level: ${failure.batteryLevel}%. Please charge your device.';
+        return 'critical_battery_error'.tr(args: [failure.batteryLevel!.toString()]);
       }
       if (failure.batteryLevel! <= 20) {
-        return l10n?.lowBatteryError(failure.batteryLevel!) ??
-            'Low battery: ${failure.batteryLevel}%. Please charge soon.';
+        return 'low_battery_error'.tr(args: [failure.batteryLevel!.toString()]);
       }
     }
     return failure.message;
   }
 
-  static String _mapStorageFailure(StorageDeviceFailure failure, AppLocalizations? l10n) {
+  static String _mapStorageFailure(StorageDeviceFailure failure) {
     if (failure.requiredSpace != null && failure.availableSpace != null) {
-      return l10n?.insufficientStorageError(
-            _formatSize(failure.requiredSpace!),
-            _formatSize(failure.availableSpace!),
-          ) ??
-          'Insufficient storage. Need ${_formatSize(failure.requiredSpace!)}, '
-          'available ${_formatSize(failure.availableSpace!)}.';
+      return 'insufficient_storage_error'.tr(
+        args: [
+          _formatSize(failure.requiredSpace!),
+          _formatSize(failure.availableSpace!),
+        ],
+      );
     }
-    return l10n?.storageError ?? 'Storage error. Please free up space and try again.';
+    return 'storage_error'.tr();
   }
 
-  static String _mapDisplayFailure(DisplayFailure failure, AppLocalizations? l10n) {
-    return l10n?.unsupportedDisplayError ?? 'Your device screen is not supported.';
+  static String _mapDisplayFailure(DisplayFailure failure) {
+    return 'unsupported_display_error'.tr();
   }
 
-  static String _mapServerFailure(ServerFailure failure, AppLocalizations? l10n) {
+  static String _mapServerFailure(ServerFailure failure) {
     if (failure.isRateLimited) {
-      return l10n?.rateLimitError ?? 'Too many requests. Please try again later.';
+      return 'rate_limit_error'.tr();
     }
     if (failure.isTimeout) {
-      return l10n?.timeoutError ?? 'Request timed out. Please try again.';
+      return 'timeout_error'.tr();
     }
     if (failure.isClientError) {
-      return l10n?.clientError ?? 'Invalid request. Please check your input.';
+      return 'client_error'.tr();
     }
     if (failure.isServerError) {
-      return l10n?.serverError ?? 'Server error. Please try again later.';
+      return 'server_error'.tr();
     }
     return failure.message;
   }
 
-  static String _mapValidationFailure(ValidationFailure failure, AppLocalizations? l10n) {
+  static String _mapValidationFailure(ValidationFailure failure) {
     if (failure.field != null && failure.rule != null) {
-      return l10n?.fieldValidationError(failure.field!, failure.message) ?? failure.message;
+      return 'field_validation_error'.tr(args: [failure.field!, failure.message]);
     }
     return failure.message;
   }
 
-  static String _mapPermissionFailure(PermissionFailure failure, AppLocalizations? l10n) {
+  static String _mapPermissionFailure(PermissionFailure failure) {
     if (failure.permanentlyDenied) {
-      return l10n?.permissionPermanentlyDenied(failure.permission) ??
-          'Permission permanently denied. Please enable it in settings.';
+      return 'permission_permanently_denied'.tr(args: [failure.permission]);
     }
-    return l10n?.permissionRequired(failure.permission) ??
-          'Permission required: ${failure.permission}';
+    return 'permission_required'.tr(args: [failure.permission]);
   }
 
   static String _formatSize(int bytes) {
@@ -435,20 +393,18 @@ class ErrorMapper {
   /// Convert failure to a SnackBar
   static SnackBar toSnackBar(
     Failure failure, {
-    BuildContext? context,
-    AppLocalizations? l10n,
     Duration duration = const Duration(seconds: 4),
     SnackBarBehavior behavior = SnackBarBehavior.floating,
     VoidCallback? onDismiss,
   }) {
-    final message = toUserMessage(failure, context: context, l10n: l10n);
+    final message = toUserMessage(failure);
 
     return SnackBar(
       content: Text(message),
       backgroundColor: _getSnackBarColor(failure),
       duration: duration,
       behavior: behavior,
-      action: _getSnackBarAction(failure, context, onDismiss),
+      action: _getSnackBarAction(failure, onDismiss),
       onVisible: () {
         _trackErrorShown(failure, 'snackbar');
       },
@@ -461,31 +417,31 @@ class ErrorMapper {
       case NoInternetConnectionFailure:
       case ConnectionTimeoutFailure:
         return Colors.orange;
-      
+
       case UnauthorizedAccessFailure:
       case InvalidCredentialsFailure:
       case AccountLockedFailure:
         return Colors.red;
-      
+
       case ValidationFailure:
       case FormValidationFailure:
       case JsonSerializationFailure:
       case DateSerializationFailure:
         return Colors.amber;
-      
+
       case PermissionFailure:
       case CameraFailure:
       case MicrophoneFailure:
       case LocationFailure:
       case BluetoothFailure:
         return Colors.blue;
-      
+
       case BatteryFailure:
         return Colors.yellow.shade800;
-      
+
       case StorageDeviceFailure:
         return Colors.purple;
-      
+
       default:
         return Colors.red;
     }
@@ -493,7 +449,6 @@ class ErrorMapper {
 
   static SnackBarAction? _getSnackBarAction(
     Failure failure,
-    BuildContext? context,
     VoidCallback? onDismiss,
   ) {
     if (_isRetryable(failure)) {
@@ -521,8 +476,7 @@ class ErrorMapper {
     String? title,
     bool barrierDismissible = false,
   }) async {
-    final l10n = AppLocalizations.of(context);
-    final message = toUserMessage(failure, l10n: l10n);
+    final message = toUserMessage(failure);
     final isRetryable = _isRetryable(failure);
 
     return showDialog(
@@ -535,7 +489,7 @@ class ErrorMapper {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                title ?? _getDialogTitle(failure, l10n),
+                title ?? _getDialogTitle(failure),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -551,15 +505,15 @@ class ErrorMapper {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   _getErrorDetails(failure),
-                  style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey,
-                      ),
+                  style: Theme.of(
+                    dialogContext,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
               ),
             if (_shouldShowActionTip(failure))
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: _getActionTip(failure, l10n),
+                child: _getActionTip(failure),
               ),
           ],
         ),
@@ -570,7 +524,7 @@ class ErrorMapper {
               _trackErrorAction(failure, 'dismiss');
               onDismiss?.call();
             },
-            child: Text(l10n?.cancel ?? 'Cancel'),
+            child: Text('cancel'.tr()),
           ),
           if (isRetryable)
             ElevatedButton(
@@ -579,16 +533,16 @@ class ErrorMapper {
                 _trackErrorAction(failure, 'retry');
                 onRetry?.call();
               },
-              child: Text(l10n?.retry ?? 'Retry'),
+              child: Text('retry'.tr()),
             ),
           if (_shouldShowSettingsAction(failure))
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 _trackErrorAction(failure, 'open_settings');
-                _openAppSettings(context, failure);
+                _openAppSettings(failure);
               },
-              child: Text(l10n?.openSettings ?? 'Open Settings'),
+              child: Text('open_settings'.tr()),
             ),
         ],
       ),
@@ -634,23 +588,23 @@ class ErrorMapper {
     }
   }
 
-  static String _getDialogTitle(Failure failure, AppLocalizations? l10n) {
+  static String _getDialogTitle(Failure failure) {
     switch (failure.runtimeType) {
       case BatteryFailure:
-        return l10n?.batteryAlertTitle ?? 'Battery Alert';
+        return 'battery_alert_title'.tr();
       case StorageDeviceFailure:
-        return l10n?.storageAlertTitle ?? 'Storage Alert';
+        return 'storage_alert_title'.tr();
       case BiometricFailure:
-        return l10n?.biometricTitle ?? 'Biometric Authentication';
+        return 'biometric_title'.tr();
       case PermissionFailure:
-        return l10n?.permissionRequiredTitle ?? 'Permission Required';
+        return 'permission_required_title'.tr();
       default:
-        return l10n?.errorTitle ?? 'Error';
+        return 'error_title'.tr();
     }
   }
 
-  static Widget _getActionTip(Failure failure, AppLocalizations? l10n) {
-    final tip = _getActionTipText(failure, l10n);
+  static Widget _getActionTip(Failure failure) {
+    final tip = _getActionTipText(failure);
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -672,16 +626,16 @@ class ErrorMapper {
     );
   }
 
-  static String _getActionTipText(Failure failure, AppLocalizations? l10n) {
+  static String _getActionTipText(Failure failure) {
     switch (failure.runtimeType) {
       case BatteryFailure:
-        return l10n?.batteryTip ?? 'Please connect your device to a charger.';
+        return 'battery_tip'.tr();
       case StorageDeviceFailure:
-        return l10n?.storageTip ?? 'Free up space by deleting unused files or apps.';
+        return 'storage_tip'.tr();
       case LocationFailure:
-        return l10n?.locationTip ?? 'Enable location services in device settings.';
+        return 'location_tip'.tr();
       case CameraFailure:
-        return l10n?.cameraTip ?? 'Grant camera permission in app settings.';
+        return 'camera_tip'.tr();
       default:
         return '';
     }
@@ -716,7 +670,7 @@ class ErrorMapper {
     }
   }
 
-  static Future<void> _openAppSettings(BuildContext context, Failure failure) async {
+  static Future<void> _openAppSettings(Failure failure) async {
     // Implement app settings opening logic
     // await openAppSettings();
   }
@@ -770,16 +724,13 @@ class ErrorMapper {
               ),
             if (isRetryable) ...[
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: onRetry,
-                child: const Text('Retry'),
-              ),
+              ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
             ],
             if (_shouldShowSettingsButton(failure))
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: TextButton(
-                  onPressed: () => _openAppSettings(null, failure),
+                  onPressed: () => _openAppSettings(failure),
                   child: const Text('Open Settings'),
                 ),
               ),
@@ -895,7 +846,7 @@ class ErrorMapper {
       case HttpStatusFailure:
       case WebSocketFailure:
         return 'network';
-      
+
       case JsonSerializationFailure:
       case ModelConversionFailure:
       case HiveSerializationFailure:
@@ -903,7 +854,7 @@ class ErrorMapper {
       case DateSerializationFailure:
       case EnumSerializationFailure:
         return 'serialization';
-      
+
       case HardwareNotAvailableFailure:
       case SensorFailure:
       case BiometricFailure:
@@ -915,38 +866,38 @@ class ErrorMapper {
       case StorageDeviceFailure:
       case DisplayFailure:
         return 'device';
-      
+
       case ServerFailure:
         return 'server';
-      
+
       case UnauthorizedAccessFailure:
       case InvalidCredentialsFailure:
       case EmailNotVerifiedFailure:
       case AccountLockedFailure:
         return 'authentication';
-      
+
       case ValidationFailure:
       case FormValidationFailure:
         return 'validation';
-      
+
       case PermissionFailure:
         return 'permission';
-      
+
       case FileFailure:
       case FileNotFoundFailure:
       case FileTooLargeFailure:
         return 'file';
-      
+
       case PaymentFailure:
       case PaymentDeclinedFailure:
       case InsufficientFundsFailure:
         return 'payment';
-      
+
       case BusinessFailure:
       case NotFoundFailure:
       case AlreadyExistsFailure:
         return 'business';
-      
+
       default:
         return 'unknown';
     }
@@ -980,6 +931,5 @@ class ErrorMapper {
     // );
   }
 }
-
 
 // Example usage

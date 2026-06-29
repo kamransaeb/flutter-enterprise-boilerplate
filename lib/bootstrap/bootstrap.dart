@@ -4,9 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_enterprise_boilerplate/app/app_initializer.dart';
 import 'package:flutter_enterprise_boilerplate/bootstrap/performance_monitor.dart';
 import 'package:flutter_enterprise_boilerplate/core/errors/error_handler.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -31,9 +29,6 @@ class Bootstrap {
     // Configure dependency injection FIRST
     // This ensures all services are available before app starts
     await configureInjection(appConfig);
-
-    // Initialize logger before other services
-    LoggerService.initialize();
 
     // AppInitializer - ACTUALLY START services after DI is configured
     await AppInitializer.initialize();
@@ -63,10 +58,6 @@ class Bootstrap {
     WidgetsFlutterBinding.ensureInitialized();
     await dotenv.load(fileName: envPath);
     final appConfig = AppConfig.fromEnv(flavor);
-    // initialize logger
-    LoggerService.initialize(
-       appConfig,
-    );
     await configureInjection(appConfig);
     // Skip certain initializations for testing
     runApp(const App());

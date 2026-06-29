@@ -9,7 +9,6 @@ part 'product_api_client.g.dart';
 @singleton
 @RestApi()
 abstract class ProductApiClient {
-
   @factoryMethod
   factory ProductApiClient(DioClient dioClient) {
     return _ProductApiClient(dioClient.dio);
@@ -44,9 +43,9 @@ abstract class ProductApiClient {
   });
 
   @GET(ProductEndpoints.getCategories)
-  Future<HttpResponse<List<Map<String, dynamic>>>> getCategories(
-{@Query('parent_id') String? parentId,}
-  );
+  Future<HttpResponse<List<Map<String, dynamic>>>> getCategories({
+    @Query('parent_id') String? parentId,
+  });
 
   @GET(ProductEndpoints.getCategoryById)
   Future<HttpResponse<Map<String, dynamic>>> getCategoryById(
@@ -60,9 +59,8 @@ abstract class ProductApiClient {
 
   @GET(ProductEndpoints.getFeaturedProducts)
   Future<HttpResponse<List<Map<String, dynamic>>>> getFeaturedProducts({
-    @Query('limit') int limit,    
-  }
-  );
+    @Query('limit') int limit,
+  });
 
   @GET(ProductEndpoints.getPopularProducts)
   Future<HttpResponse<List<Map<String, dynamic>>>> getPopularProducts();
@@ -115,5 +113,32 @@ abstract class ProductApiClient {
   @GET(ProductEndpoints.getProductBrands)
   Future<HttpResponse<List<Map<String, dynamic>>>> getProductBrands();
 
- 
+  @GET(ProductEndpoints.getWishlist)
+  Future<HttpResponse<List<Map<String, dynamic>>>> getWishlist();
+
+  @POST(ProductEndpoints.addToWishlist)
+  Future<HttpResponse<void>> addToWishlist({
+    @Path('productId') required String productId,
+  });
+
+  @DELETE(ProductEndpoints.removeFromWishlist)
+  Future<HttpResponse<void>> removeFromWishlist({
+    @Path('productId') required String productId,
+  });
+
+  @GET(ProductEndpoints.getRecentlyViewed)
+  Future<HttpResponse<List<Map<String, dynamic>>>> getRecentlyViewed({
+    @Query('limit') int limit,
+  });
+
+  @POST(ProductEndpoints.addToRecentlyViewed)
+  Future<HttpResponse<void>> addToRecentlyViewed({
+    @Path('productId') required String productId,
+  });
+
+  @DELETE(ProductEndpoints.removeFromRecentlyViewed)
+  Future<HttpResponse<void>> removeFromRecentlyViewed({
+    @Path('productId') required String productId,
+  });
+
 }

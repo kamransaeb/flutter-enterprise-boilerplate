@@ -1,12 +1,16 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_enterprise_boilerplate/core/navigation/app_router.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/presentation/widgets/login_form.dart';
 
 import '../bloc/auth_bloc.dart';
 
-
+@RoutePage()
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.onResult});
+
+  final void Function(bool? success)? onResult;
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +54,8 @@ class LoginPage extends StatelessWidget {
                     );
                   },
                   authenticated: (_) {
-                    // Navigate to home
-                    Navigator.of(context).pushReplacementNamed('/home');
+                    onResult?.call(true);
+                    context.router.replace(const HomeRoute());
                   },
                   orElse: () {},
                 );
@@ -69,7 +73,7 @@ class LoginPage extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pushNamed('/register');
+                    context.router.push(const RegisterRoute());
                   },
                   child: const Text('Sign up'),
                 ),

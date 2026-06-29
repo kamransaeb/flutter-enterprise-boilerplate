@@ -15,9 +15,9 @@ import 'package:flutter_enterprise_boilerplate/features/auth/data/models/verify_
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/api_client.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/api_response.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/response_converter.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 //*** Difference between Response and HttpResponse is
 // Response (from Dio) is the raw HTTP result: status code, headers,
@@ -26,8 +26,9 @@ import 'package:retrofit/retrofit.dart';
 // strongly typed parsed body T.
 @LazySingleton(as: AuthRemoteDataSource)
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
+  final LoggerService _logger;
   final ApiClient _apiClient;
-  AuthRemoteDataSourceImpl(this._apiClient);
+  AuthRemoteDataSourceImpl(this._apiClient, this._logger);
 
   @override
   Future<ApiResponse<LoginResponseModel>> login({
@@ -52,7 +53,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to login',
         error: e,
         stackTrace: stackTrace,
@@ -84,7 +85,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to changePassword',
         error: e,
         stackTrace: stackTrace,
@@ -114,7 +115,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to forgotPassword',
         error: e,
         stackTrace: stackTrace,
@@ -140,7 +141,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to logout',
         error: e,
         stackTrace: stackTrace,
@@ -173,7 +174,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to refreshToken',
         error: e,
         stackTrace: stackTrace,
@@ -205,7 +206,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to register',
         error: e,
         stackTrace: stackTrace,
@@ -236,7 +237,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to resetPassword',
         error: e,
         stackTrace: stackTrace,
@@ -268,7 +269,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to socialLogin',
         error: e,
         stackTrace: stackTrace,
@@ -298,7 +299,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to verifyEmail',
         error: e,
         stackTrace: stackTrace,
@@ -328,7 +329,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         error: errorResponse,
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[AuthRemoteDataSourceImpl] UnknownException: Failed to resendVerification',
         error: e,
         stackTrace: stackTrace,

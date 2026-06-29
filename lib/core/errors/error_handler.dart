@@ -7,18 +7,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_enterprise_boilerplate/app/app_config.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/firebase/firebase_service.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/sentry_service.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'exceptions.dart';
 import 'failures.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// Centralized error handler for the application.
 ///
 /// Handles all types of errors, converts them to failures,
 /// and provides logging and reporting capabilities.
 class ErrorHandler {
+  static LoggerService get _logger => getIt<LoggerService>();
   static late final AppConfig _appConfig;
   static bool _isInitialized = false;
   const ErrorHandler._();
@@ -59,7 +60,7 @@ class ErrorHandler {
       // This zone will handle all uncaught async errors
     }, _handleAsyncZoneError);
 
-    logger.i('Error handling initialized for ${_appConfig.flavor}');
+    _logger.i('Error handling initialized for ${_appConfig.flavor}');
     _isInitialized = true;
   }
 
@@ -69,7 +70,7 @@ class ErrorHandler {
     FlutterError.presentError(details);
     // Log to console in development
     if (_appConfig.enableLogging) {
-      logger.e(
+      _logger.e(
         'Flutter error: ${details.exceptionAsString()}',
         error: details.exception,
         stackTrace: details.stack,
@@ -90,7 +91,7 @@ class ErrorHandler {
   static bool _handlePlatformError(Object error, StackTrace stack) {
     // Log to console in development
     if (_appConfig.enableLogging) {
-      logger.e('Platform error: $error', error: error, stackTrace: stack);
+      _logger.e('Platform error: $error', error: error, stackTrace: stack);
     }
 
     // Report to crash reporting services
@@ -103,7 +104,7 @@ class ErrorHandler {
   static void _handleAsyncZoneError(Object error, StackTrace stack) {
     // Log to console in development
     if (_appConfig.enableLogging) {
-      logger.e('Async zone error: $error', error: error, stackTrace: stack);
+      _logger.e('Async zone error: $error', error: error, stackTrace: stack);
     }
 
     // Report to crash reporting services
@@ -150,7 +151,7 @@ class ErrorHandler {
     } catch (e) {
       // Faile silently - we don't want to crash the app
       if (_appConfig.enableLogging) {
-        logger.e('Failed to report error', error: e);
+        _logger.e('Failed to report error', error: e);
       }
     }
   }
@@ -168,7 +169,7 @@ class ErrorHandler {
 
     // Log to console
     if (_appConfig.enableLogging) {
-      logger.e('Manually captured error', error: error, stackTrace: stackTrace);
+      _logger.e('Manually captured error', error: error, stackTrace: stackTrace);
     }
 
     // Report to crash reporting services
@@ -193,7 +194,7 @@ class ErrorHandler {
       }
     } catch (e) {
       if (_appConfig.enableLogging) {
-        logger.e('Failed to set user identifier', error: e);
+        _logger.e('Failed to set user identifier', error: e);
       }
     }
   }
@@ -210,7 +211,7 @@ class ErrorHandler {
       }
     } catch (e) {
       if (_appConfig.enableLogging) {
-        logger.e('Failed to clear user identifier', error: e);
+        _logger.e('Failed to clear user identifier', error: e);
       }
     }
   }
@@ -227,7 +228,7 @@ class ErrorHandler {
       }
     } catch (e) {
       if (_appConfig.enableLogging) {
-        logger.e('Failed to set custom key', error: e);
+        _logger.e('Failed to set custom key', error: e);
       }
     }
   }
@@ -1049,7 +1050,7 @@ class ErrorHandler {
   static void _logError(Object error, StackTrace? stackTrace) {
     // Use your logging solution
     if (_appConfig.enableLogging) {
-      logger.e('Error', error: error, stackTrace: stackTrace);
+      _logger.e('Error', error: error, stackTrace: stackTrace);
     }
   }
 

@@ -11,15 +11,16 @@ import 'package:flutter_enterprise_boilerplate/infrastructure/cache/cache_manage
     as infrastructure;
 import 'package:flutter_enterprise_boilerplate/infrastructure/cache/models/cache_entry.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/cache/models/cache_statistics.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:synchronized/synchronized.dart';
 import '../storage/local_storage.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 @LazySingleton(as: infrastructure.CacheManager)
 class CacheManagerImpl implements infrastructure.CacheManager {
+  final LoggerService _logger;
   late final LocalStorage _storage;
   late final BaseCacheManager _cacheManager;
   final _lock = Lock();
@@ -45,8 +46,9 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   /// Creates a new [CacheManagerImpl] with the given storage and optional configuration.
   CacheManagerImpl(
-    @Named('hive_storage') LocalStorage storage, 
+    @Named('hive_storage') LocalStorage storage,
     AppConfig appConfig,
+    this._logger,
     // @factoryParam is an injectable annotation that marks constructor
     // parameters as values passed at resolve time, not registered as dependencies.
     // @factoryParam = “this constructor argument comes from the caller at creation time.”
@@ -77,7 +79,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
   @override
   Future<Either<Failure, String>> getCachedFile(String url) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -87,7 +89,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
       await _updateMetadata(url, accessedAt: DateTime.now());
       return Right(file.path);
     } on Exception catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         'Failed to get cached file: $e',
         error: e,
         stackTrace: stackTrace,
@@ -107,7 +109,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
     String? boxName,
   }) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -117,7 +119,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
       await _updateMetadata(url, accessedAt: DateTime.now());
       return Right(file.path);
     } on Exception catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         'Failed to get cached file: $e',
         error: e,
         stackTrace: stackTrace,
@@ -133,7 +135,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, File?>> getFileFromCache(String url) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -146,7 +148,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
       }
       return const Right(null);
     } on Exception catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         'Failed to get file from cache: $e',
         error: e,
         stackTrace: stackTrace,
@@ -162,7 +164,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> cacheFile(String url) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -183,7 +185,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
       return const Right(unit);
     } on Exception catch (e, stackTrace) {
-      logger.e('Failed to cache file: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Failed to cache file: $e', error: e, stackTrace: stackTrace);
       return Left(
         CacheFailure(
           message: 'Failed to cache file: $e',
@@ -200,7 +202,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
     String? boxName,
   }) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -219,7 +221,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
       return const Right(unit);
     } on Exception catch (e, stackTrace) {
-      logger.e('Failed to cache file: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Failed to cache file: $e', error: e, stackTrace: stackTrace);
       return Left(
         CacheFailure(
           message: 'Failed to cache file: $e',
@@ -234,7 +236,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
     void Function(int completed, int total)? onProgress,
   }) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -259,7 +261,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
       return const Right(unit);
     } on Exception catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         'Failed to pre-cache files: $e',
         error: e,
         stackTrace: stackTrace,
@@ -275,7 +277,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> clearCache() async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -299,7 +301,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, int>> getCacheSize() async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -334,7 +336,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, List<String>>> getCachedUrls() async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -375,7 +377,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> removeCachedFile(String url) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -404,7 +406,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
     String? boxName,
   }) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -429,7 +431,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> removeCachedFiles(List<String> urls) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -453,7 +455,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, CacheStatistics>> getStatistics() async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -537,7 +539,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
     Duration? maxAge,
   }) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -561,7 +563,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> refreshCache(String url) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
 
@@ -585,7 +587,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, int>> cleanExpired() async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -631,7 +633,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> setMaxSize(int sizeInBytes) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -651,7 +653,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> setStalePeriod(Duration duration) async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -690,7 +692,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Map<String, dynamic>>> getConfig() async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     try {
@@ -712,7 +714,7 @@ class CacheManagerImpl implements infrastructure.CacheManager {
 
   Future<Either<Failure, Unit>> dispose() async {
     if (_isDisposed) {
-      logger.e('Cache manager is disposed');
+      _logger.e('Cache manager is disposed');
       return const Left(CacheFailure(message: 'Cache manager is disposed'));
     }
     _isDisposed = true;

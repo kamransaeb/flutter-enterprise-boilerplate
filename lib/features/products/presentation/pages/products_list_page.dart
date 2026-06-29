@@ -1,8 +1,9 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:auto_route/auto_route.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/widgets/common/app_button.dart';
 import '../../../../core/widgets/common/app_text_field.dart';
 import '../../../../core/widgets/feedback/error_view.dart';
@@ -12,14 +13,14 @@ import '../bloc/products_bloc.dart';
 import '../widgets/product_card.dart';
 
 @RoutePage()
-class ProductsListPage extends StatefulWidget {
-  const ProductsListPage({super.key});
+class ProductsPage extends StatefulWidget {
+  const ProductsPage({super.key});
 
   @override
-  State<ProductsListPage> createState() => _ProductsListPageState();
+  State<ProductsPage> createState() => _ProductsPageState();
 }
 
-class _ProductsListPageState extends State<ProductsListPage> {
+class _ProductsPageState extends State<ProductsPage> {
   final PagingController<int, Product> _pagingController =
       PagingController(firstPageKey: 1);
   final TextEditingController _searchController = TextEditingController();
@@ -123,7 +124,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
                           product: product,
                           onTap: () {
                             context.router.push(
-                              ProductDetailRoute(id: product.id),
+                              ProductDetailsRoute(id: product.id),
                             );
                           },
                           onAddToCart: () {

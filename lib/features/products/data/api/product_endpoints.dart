@@ -12,7 +12,6 @@ abstract class ProductEndpoints {
   static const String getNewArrivals = '/products/new-arrivals';
   static const String getDiscountedProducts = '/products/discounted';
   static const String getRelatedProducts = '/products/{id}/related';
-  
   static const String searchProducts = '/products/search';
   
   static const String getProductReviews = '/products/{id}/reviews';
@@ -22,4 +21,13 @@ abstract class ProductEndpoints {
   
   static const String getProductAttributes = '/attributes';
   static const String getProductBrands = '/brands';
+
+  static const String getWishlist = '/wishlist';
+  static const String addToWishlist = '/wishlist';
+  static const String removeFromWishlist = '/wishlist/{productId}';
+  static const String getRecentlyViewed = '/recently-viewed';
+  static const String addToRecentlyViewed = '/recently-viewed';
+  static const String removeFromRecentlyViewed = '/recently-viewed/{productId}';
+  
+  
 }

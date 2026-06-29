@@ -4,13 +4,14 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_enterprise_boilerplate/app/app_config.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// Interceptor for adding default headers to all requests
 @lazySingleton
 class HeaderInterceptor extends Interceptor {
+  final LoggerService _logger;
   final AppConfig _appConfig;
   final DeviceInfoPlugin _deviceInfoPlugin;
   PackageInfo? _packageInfo;
@@ -18,7 +19,7 @@ class HeaderInterceptor extends Interceptor {
   String? _deviceModel;
   String? _osVersion;
 
-  HeaderInterceptor(this._appConfig, this._deviceInfoPlugin) {
+  HeaderInterceptor(this._appConfig, this._deviceInfoPlugin, this._logger) {
     _initPackageInfo();
     _initDeviceInfo();
   }
@@ -46,7 +47,7 @@ class HeaderInterceptor extends Interceptor {
         _osVersion = 'Web';
       }
     } catch (e) {
-      logger.e('Failed to initialize device info: $e');
+      _logger.e('Failed to initialize device info: $e');
     }
   }
 

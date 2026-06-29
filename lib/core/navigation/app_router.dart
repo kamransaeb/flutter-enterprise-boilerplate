@@ -1,7 +1,39 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_enterprise_boilerplate/core/navigation/pages/forbidden_page.dart';
+import 'package:flutter_enterprise_boilerplate/core/navigation/pages/maintenance_page.dart';
+import 'package:flutter_enterprise_boilerplate/core/navigation/pages/not_found_page.dart';
 import 'package:flutter_enterprise_boilerplate/core/navigation/route_observers.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
+import 'package:flutter_enterprise_boilerplate/features/about/presentation/pages/about_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/activity/presentation/pages/activity_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/analytics/presentation/pages/analytics_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/auth/presentation/pages/login_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/auth/presentation/pages/register_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/auth/presentation/pages/reset_password_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/auth/presentation/pages/verify_email_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/cart/presentation/pages/cart_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/checkout/presentation/pages/checkout_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/favorites/presentation/pages/favorites_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/help/presentation/pages/help_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/home/presentation/pages/home_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/orders/presentation/pages/new_order_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/orders/presentation/pages/order_details_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/orders/presentation/pages/orders_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/products/presentation/pages/new_product_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/products/presentation/pages/product_details_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/products/presentation/pages/products_list_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/profile/presentation/pages/profile_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/search/presentation/pages/search_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/settings/presentation/pages/account_settings_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/settings/presentation/pages/notification_settings_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/settings/presentation/pages/privacy_settings_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/settings/presentation/pages/settings_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/splash/presentation/pages/splash_page.dart';
+import 'package:flutter_enterprise_boilerplate/features/support/presentation/pages/support_page.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 
@@ -38,7 +70,10 @@ part 'app_router.gr.dart';
 // Router: It implements RouterDelegate and works with declarative routing
 // (RouterConfig, GoRouter))
 @singleton
-@AutoRouterConfig(replaceInRouteName: 'Page,Route')
+@AutoRouterConfig(
+  replaceInRouteName: 'Page,Route',
+  generateForDir: ['lib/features', 'lib/core/navigation/pages'],
+)
 class AppRouter extends RootStackRouter {
 
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();  
@@ -155,6 +190,48 @@ class AppRouter extends RootStackRouter {
         AutoRoute(page: NotificationSettingsRoute.page, path: 'notifications'),
         AutoRoute(page: PrivacySettingsRoute.page, path: 'privacy'),
       ],
+    ),
+
+    // Additional feature routes
+    AutoRoute(
+      page: FavoritesRoute.page,
+      path: '/favorites',
+      guards: [AuthGuard(requiresAuth: true)],
+    ),
+    AutoRoute(
+      page: HelpRoute.page,
+      path: '/help',
+      guards: [AuthGuard(requiresAuth: true)],
+    ),
+    AutoRoute(
+      page: AboutRoute.page,
+      path: '/about',
+      guards: [AuthGuard(requiresAuth: true)],
+    ),
+    AutoRoute(
+      page: NewOrderRoute.page,
+      path: '/orders/new',
+      guards: [AuthGuard(requiresAuth: true)],
+    ),
+    AutoRoute(
+      page: AnalyticsRoute.page,
+      path: '/analytics',
+      guards: [AuthGuard(requiresAuth: true)],
+    ),
+    AutoRoute(
+      page: SupportRoute.page,
+      path: '/support',
+      guards: [AuthGuard(requiresAuth: true)],
+    ),
+    AutoRoute(
+      page: ActivityRoute.page,
+      path: '/activity',
+      guards: [AuthGuard(requiresAuth: true)],
+    ),
+    AutoRoute(
+      page: NewProductRoute.page,
+      path: '/products/new',
+      guards: [AuthGuard(requiresAuth: true)],
     ),
 
     // Error routes

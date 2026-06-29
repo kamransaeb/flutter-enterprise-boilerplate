@@ -3,31 +3,33 @@
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 import '../../constants/app_constants.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// Helper class for network-related operations
 @singleton
 class NetworkHelper {
+  final LoggerService _logger;
   final Connectivity _connectivity;
   final InternetConnection _internetConnection;
   
   NetworkHelper(
     this._connectivity,
     this._internetConnection,
+    this._logger,
   );
 
   /// Check if device has active internet connection
   Future<bool> get hasInternetAccess async {
     try {
       final isConnected = await _internetConnection.hasInternetAccess;
-      logger.d('Internet connection check: $isConnected');
+      _logger.d('Internet connection check: $isConnected');
       return isConnected;
     } catch (e) {
-      logger.e('Error checking internet connection: $e');
+      _logger.e('Error checking internet connection: $e');
       return false;
     }
   }
@@ -36,13 +38,13 @@ class NetworkHelper {
   Future<ConnectivityResult> get connectivityResult async {
     try {
       final result = await _connectivity.checkConnectivity();
-      logger.d('Connectivity result: $result');
+      _logger.d('Connectivity result: $result');
       return result.firstWhere(
         (r) => r != ConnectivityResult.none,
         orElse: () => ConnectivityResult.none,
       );
     } catch (e) {
-      logger.e('Error checking connectivity: $e');
+      _logger.e('Error checking connectivity: $e');
       return ConnectivityResult.none;
     }
   }
@@ -78,7 +80,7 @@ class NetworkHelper {
       final result = await _connectivity.checkConnectivity();
       return result != ConnectivityResult.none;
     } catch (e) {
-      logger.e('Error checking network connection: $e');
+      _logger.e('Error checking network connection: $e');
       return false;
     }
   }
@@ -135,13 +137,13 @@ class NetworkHelper {
     
     while (DateTime.now().difference(startTime) < timeout) {
       if (await hasInternetAccess) {
-        logger.i('Internet connection established');
+        _logger.i('Internet connection established');
         return true;
       }
       await Future.delayed(checkInterval);
     }
     
-    logger.w('Timeout waiting for internet connection');
+    _logger.w('Timeout waiting for internet connection');
     return false;
   }
 
@@ -165,10 +167,10 @@ class NetworkHelper {
       stopwatch.stop();
       await socket.close();
       
-      logger.d('Network latency: ${stopwatch.elapsedMilliseconds}ms');
+      _logger.d('Network latency: ${stopwatch.elapsedMilliseconds}ms');
       return stopwatch.elapsed;
     } catch (e) {
-      logger.e('Error measuring network latency: $e');
+      _logger.e('Error measuring network latency: $e');
       return Duration.zero;
     }
   }
@@ -194,7 +196,7 @@ class NetworkHelper {
       final bandwidthMbps = (fileSizeKB * 8) / (durationInSeconds * 1000);
       return bandwidthMbps;
     } catch (e) {
-      logger.e('Error measuring bandwidth: $e');
+      _logger.e('Error measuring bandwidth: $e');
       return 0.0;
     }
   }
@@ -210,7 +212,7 @@ class NetworkHelper {
       await socket.close();
       return true;
     } catch (e) {
-      logger.d('Host $host:$port is not reachable: $e');
+      _logger.d('Host $host:$port is not reachable: $e');
       return false;
     }
   }
@@ -228,7 +230,7 @@ class NetworkHelper {
         }
       }
     } catch (e) {
-      logger.e('Error getting device IP: $e');
+      _logger.e('Error getting device IP: $e');
     }
     return null;
   }

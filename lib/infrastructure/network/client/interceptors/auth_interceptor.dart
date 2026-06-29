@@ -72,18 +72,22 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/interceptors/queued_interceptor_callback.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/secure_storage.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 class AuthInterceptor extends Interceptor {
   final SecureStorage _secureStorage;
+  final LoggerService _logger;
   String? _accessToken;
   String? _refreshToken;
   bool _isRefreshing = false;
   final List<QueuedInterceptorCallback> _pendingRequests = [];
 
-  AuthInterceptor({required SecureStorage secureStorage})
-    : _secureStorage = secureStorage {
+  AuthInterceptor({
+    required SecureStorage secureStorage,
+    required LoggerService logger,
+  })  : _secureStorage = secureStorage,
+        _logger = logger {
     _loadTokens();
   }
 
@@ -140,7 +144,7 @@ class AuthInterceptor extends Interceptor {
                          DateTime.now(),
             ), 
             );
-                logger.d(
+                _logger.d(
           'Request queued for token refresh. '
           'Queue size: ${_pendingRequests.length}'
         );
@@ -202,7 +206,7 @@ class AuthInterceptor extends Interceptor {
       }
       return false;
     } catch (e) {
-      logger.e('Failed to refresh access token: $e');
+      _logger.e('Failed to refresh access token: $e');
       return false;
     }
   }
@@ -234,12 +238,12 @@ class AuthInterceptor extends Interceptor {
       _pendingRequests,
     );
     _pendingRequests.clear();
-        logger.d('Retrying ${queuedRequests.length} queued requests');
+        _logger.d('Retrying ${queuedRequests.length} queued requests');
 
 
     for (final queued in queuedRequests) {
       final waitTime = queued.waitingDuration;
-       logger.d('Retrying request after ${waitTime.inMilliseconds}ms: '
+       _logger.d('Retrying request after ${waitTime.inMilliseconds}ms: '
           '${queued.requestOptions.method} ${queued.requestOptions.path}');
       
       try {
@@ -249,13 +253,13 @@ class AuthInterceptor extends Interceptor {
        // Resolve the queued request with the new response
       if (queued.isValid) {
         queued.resolve(response);
-                  logger.d('Successfully retried: ${queued.requestOptions.path}');
+                  _logger.d('Successfully retried: ${queued.requestOptions.path}');
 
       }
       
       
       } catch (e) {
-        logger.e('Failed to retry: ${queued.requestOptions.path}', error: e);
+        _logger.e('Failed to retry: ${queued.requestOptions.path}', error: e);
 
         // If retry fails, reject the queued request
         if (queued.isValid) {
@@ -273,12 +277,12 @@ class AuthInterceptor extends Interceptor {
   }
 
   void _rejectAllQueuedRequests(DioException error) {
-     logger.w('Rejecting ${_pendingRequests.length} queued requests due to refresh failure');
+     _logger.w('Rejecting ${_pendingRequests.length} queued requests due to refresh failure');
     for (final queued in _pendingRequests) {
 
       if (queued.isValid) {
         queued.reject(error);
-          logger.d('Rejected: ${queued.requestOptions.path} '
+          _logger.d('Rejected: ${queued.requestOptions.path} '
             '(waited ${queued.waitingDuration.inMilliseconds}ms)');
       }
     }

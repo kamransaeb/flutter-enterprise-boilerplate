@@ -31,7 +31,7 @@ class _PaymentsApiClient implements PaymentsApiClient {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            null,
+            '/payments/initiate',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -64,7 +64,7 @@ class _PaymentsApiClient implements PaymentsApiClient {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            null,
+            '/payments/verify',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -97,7 +97,7 @@ class _PaymentsApiClient implements PaymentsApiClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            null,
+            '/payments/${paymentId}/status',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -131,7 +131,7 @@ class _PaymentsApiClient implements PaymentsApiClient {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            null,
+            '/payments/refund',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -163,7 +163,7 @@ class _PaymentsApiClient implements PaymentsApiClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            null,
+            '/payments/methods',
             queryParameters: queryParameters,
             data: _data,
           )

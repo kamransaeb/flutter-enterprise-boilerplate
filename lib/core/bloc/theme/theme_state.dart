@@ -42,7 +42,7 @@ extension AppThemeExtension on AppThemeStatus {
 }
 
 @freezed
-class ThemeState with _$ThemeState {
+abstract class ThemeState with _$ThemeState {
   const ThemeState._();
 
   const factory ThemeState.initial({

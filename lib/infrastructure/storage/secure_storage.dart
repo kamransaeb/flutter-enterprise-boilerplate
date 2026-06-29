@@ -1,12 +1,12 @@
 // lib/infrastructure/storage/secure_storage.dart
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorage implements LocalStorage {
+  final LoggerService _logger;
   final FlutterSecureStorage _storage;
   final bool _enableLogging;
   bool _isInitialized = false;
@@ -14,8 +14,10 @@ class SecureStorage implements LocalStorage {
   SecureStorage({
     required FlutterSecureStorage storage,
     required bool enableLogging,
+    required LoggerService logger,
   })  : _storage = storage,
-        _enableLogging = enableLogging;
+        _enableLogging = enableLogging,
+        _logger = logger;
 
   @override
   bool get isInitialized => _isInitialized;
@@ -27,9 +29,9 @@ class SecureStorage implements LocalStorage {
       await _storage.write(key: '_test', value: 'test');
       await _storage.delete(key: '_test');
       _isInitialized = true;
-      logger.i('[SecureStorage] SecureStorage initialized');
+      _logger.i('[SecureStorage] SecureStorage initialized');
     } catch (e, stack) {
-      logger.e('[SecureStorage] Failed to initialize SecureStorage', error: e, stackTrace: stack);
+      _logger.e('[SecureStorage] Failed to initialize SecureStorage', error: e, stackTrace: stack);
       rethrow;
     }
   }
@@ -47,9 +49,9 @@ class SecureStorage implements LocalStorage {
       }
       
       await _storage.write(key: key, value: stringValue);
-      logger.i('[SecureStorage] Wrote to SecureStorage: $key');
+      _logger.i('[SecureStorage] Wrote to SecureStorage: $key');
     } catch (e, stack) {
-      logger.e('[SecureStorage] Failed to write to SecureStorage: $key', error: e, stackTrace: stack);
+      _logger.e('[SecureStorage] Failed to write to SecureStorage: $key', error: e, stackTrace: stack);
       rethrow;
     }
   }
@@ -74,7 +76,7 @@ class SecureStorage implements LocalStorage {
       
       return value as T;
     } catch (e, stack) {
-      logger.e('[SecureStorage] Failed to read from SecureStorage: $key', error: e, stackTrace: stack);
+      _logger.e('[SecureStorage] Failed to read from SecureStorage: $key', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -83,9 +85,9 @@ class SecureStorage implements LocalStorage {
   Future<void> delete(String key, {String? boxName}) async {
     try {
       await _storage.delete(key: key);
-      logger.i('[SecureStorage] Deleted from SecureStorage: $key');
+      _logger.i('[SecureStorage] Deleted from SecureStorage: $key');
     } catch (e, stack) {
-      logger.e('[SecureStorage] Failed to delete from SecureStorage: $key', error: e, stackTrace: stack);
+      _logger.e('[SecureStorage] Failed to delete from SecureStorage: $key', error: e, stackTrace: stack);
       rethrow;
     }
   }
@@ -94,9 +96,9 @@ class SecureStorage implements LocalStorage {
   Future<void> clear({String? boxName}) async {
     try {
       await _storage.deleteAll();
-      logger.i('[SecureStorage] Cleared all SecureStorage');
+      _logger.i('[SecureStorage] Cleared all SecureStorage');
     } catch (e, stack) {
-      logger.e('[SecureStorage] Failed to clear SecureStorage', error: e, stackTrace: stack);
+      _logger.e('[SecureStorage] Failed to clear SecureStorage', error: e, stackTrace: stack);
       rethrow;
     }
   }
@@ -117,7 +119,7 @@ class SecureStorage implements LocalStorage {
       final all = await _storage.readAll();
       return all;
     } catch (e, stack) {
-      logger.e('[SecureStorage] Failed to get all from SecureStorage', error: e, stackTrace: stack);
+      _logger.e('[SecureStorage] Failed to get all from SecureStorage', error: e, stackTrace: stack);
       return {};
     }
   }
@@ -126,7 +128,7 @@ class SecureStorage implements LocalStorage {
   Future<void> close() async {
     // SecureStorage doesn't need closing
     _isInitialized = false;
-    logger.i('[SecureStorage] SecureStorage closed');
+    _logger.i('[SecureStorage] SecureStorage closed');
   }
 
   // SecureStorage-specific methods

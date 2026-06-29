@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_enterprise_boilerplate/app/app_config.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/environment_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/hive_storage.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
@@ -12,6 +11,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// StorageModule is an Injectable module that cenralizes how all storage-related
 /// dependencies are created and registered in GetIt.
@@ -62,10 +62,13 @@ abstract class StorageModule {
   LocalStorage secureStorage(
     FlutterSecureStorage storage,
     AppConfig appConfig,
-  ) => SecureStorage(
-    storage: storage,
-    enableLogging: appConfig.enableLogging,
-  );
+    LoggerService logger,
+  ) =>
+      SecureStorage(
+        storage: storage,
+        enableLogging: appConfig.enableLogging,
+        logger: logger,
+      );
 
   //============================================================================
   // HiveStorage instance (our wrapper)
@@ -89,138 +92,11 @@ abstract class StorageModule {
   @Named('hive_storage')
   LocalStorage hiveStorage(
     EnvironmentService env,
-    @Named('settings_box') Box settingsBox,
-    @Named('user_box') Box userBox,
-    @Named('cache_box') Box cacheBox,
-    @Named('products_box') Box productsBox,
-    @Named('orders_box') Box ordersBox,
-    @Named('notifications_box') Box notificationsBox,
-    @Named('api_cache_box') Box apiCacheBox,
-  ) => HiveStorage(
-    env: env,
-    settingsBox: settingsBox,
-    userBox: userBox,
-    cacheBox: cacheBox,
-    productsBox: productsBox,
-    ordersBox: ordersBox,
-    notificationsBox: notificationsBox,
-    apiCacheBox: apiCacheBox,
-  );
+    LoggerService logger,
+  ) =>
+      HiveStorage(
+        env: env,
+        logger: logger,
+      );
 
- //============================================================================
-  // Hive Boxes - These depend on Hive being initialized
-  //============================================================================
-
-  @Named('settings_box')
-  @singleton
-  @preResolve
-  Future<Box> get settingsBox async {
-    // Hive is already initialized by initializeHive
-    return await Hive.openBox(
-      'settings',
-      compactionStrategy: (entries, deletedEntries) {
-        return deletedEntries > 50;
-      },
-    );
-  }
-
-  @Named('user_box')
-  @singleton
-  @preResolve
-  Future<Box> get userBox async {
-    return await Hive.openBox(
-      'user',
-      compactionStrategy: (entries, deletedEntries) {
-        return deletedEntries > 20;
-      },
-    );
-  }
-
-  @Named('cache_box')
-  @singleton
-  @preResolve
-  Future<Box> get cacheBox async {
-    return await Hive.openBox(
-      'cache',
-      compactionStrategy: (entries, deletedEntries) {
-        // Auto-compact after 100 deleted entries
-        return deletedEntries > 100;
-      },
-    );
-  }
-
-  @Named('products_box')
-  @singleton
-  @preResolve
-  Future<Box> get productsBox async {
-    return await Hive.openBox(
-      'products',
-      compactionStrategy: (entries, deletedEntries) {
-        return deletedEntries > 200;
-      },
-    );
-  }
-
-  @Named('orders_box')
-  @singleton
-  @preResolve
-  Future<Box> get ordersBox async {
-    return await Hive.openBox(
-      'orders',
-      compactionStrategy: (entries, deletedEntries) {
-        return deletedEntries > 150;
-      },
-    );
-  }
-
-  @Named('notifications_box')
-  @singleton
-  @preResolve
-  Future<Box> get notificationsBox async {
-    return await Hive.openBox(
-      'notifications',
-      compactionStrategy: (entries, deletedEntries) {
-        return deletedEntries > 100;
-      },
-    );
-  }
-
-  @Named('api_cache_box')
-  @singleton
-  @preResolve
-  Future<Box> get apiCacheBox async {
-    return await Hive.openBox(
-      'api_cache',
-      compactionStrategy: (entries, deletedEntries) {
-        return deletedEntries > 100;
-      },
-    );
-  }
-
-  //============================================================================
-  // Storage Keys & Constants
-  //============================================================================
-  @Named('auth_token_key')
-  @singleton
-  String get authTokenKey => 'auth_token';
-
-  @Named('refresh_token_key')
-  @singleton
-  String get refreshTokenKey => 'refresh_token';
-
-  @Named('user_id_key')
-  @singleton
-  String get userIdKey => 'user_id';
-
-  @Named('theme_mode_key')
-  @singleton
-  String get themeModeKey => 'theme_mode';
-
-  @Named('locale_key')
-  @singleton
-  String get localeKey => 'locale';
-
-  @Named('onboarding_completed_key')
-  @singleton
-  String get onboardingCompletedKey => 'onboarding_completed';
 }

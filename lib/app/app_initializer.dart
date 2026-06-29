@@ -14,11 +14,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_enterprise_boilerplate/app/app_config.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/deep_link_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/environment_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/firebase/firebase_service.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/notification_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/sentry_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/hive_storage.dart';
@@ -28,6 +26,7 @@ import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// What must run after the injectablegraph exists (configureInjection)
 /// Responsible for ACTUALLY initializing services at runtime
@@ -37,6 +36,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// first-launch loginc, etc.
 @singleton
 class AppInitializer {
+  static LoggerService get _logger => getIt<LoggerService>();
   static late final AppConfig _appConfig;
   static late final EnvironmentService _env;
   static late final LocalStorage _localStorage;
@@ -52,7 +52,7 @@ class AppInitializer {
       _localStorage = getIt<LocalStorage>(instanceName: 'shared_prefs');
       // _logger = getIt<LoggerService>();
 
-      logger.i('🚀 Starting app initialization for ${_appConfig.flavor}');
+      _logger.i('🚀 Starting app initialization for ${_appConfig.flavor}');
       // Print configuration in development
       if (_env.shouldLogVerbose) {
         _env.printConfig();
@@ -75,20 +75,20 @@ class AppInitializer {
        // Check for first launch
       final isFirstLaunch = await _checkFirstLaunch();
       if (isFirstLaunch) {
-        logger.i('First launch detected');
+        _logger.i('First launch detected');
         await _handleFirstLaunch();
       }
 
       final elapsed = stopwatch.elapsedMilliseconds;
 
-      logger.i('✅ App initialization completed in ${elapsed}ms');
+      _logger.i('✅ App initialization completed in ${elapsed}ms');
 
       // Track initialization event
       if (_env.shouldUseAnalytics) {
         unawaited(_trackInitializationEvent(elapsed));
       }
     } catch (e, stack) {
-      logger.e('❌ App initialization failed', error: e, stackTrace: stack);
+      _logger.e('❌ App initialization failed', error: e, stackTrace: stack);
 
       // Report to crash reporting services if available
       if (_env.shouldUseCrashlytics) {
@@ -156,50 +156,50 @@ class AppInitializer {
 
   /// Initialize package information
   static Future<void> _initializePackageInfo() async {
-    logger.i('📦 Initializing package info...');
+    _logger.i('📦 Initializing package info...');
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       getIt.registerSingleton<PackageInfo>(packageInfo);
-      logger.i('  ✓ App: ${packageInfo.appName} v${packageInfo.version}');
+      _logger.i('  ✓ App: ${packageInfo.appName} v${packageInfo.version}');
     } catch (e, stack) {
-      logger.e('  ✗ Package info failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Package info failed', error: e, stackTrace: stack);
     }
   }
   
   /// Initialize device information
   static Future<void> _initializeDeviceInfo() async {
-    logger.i('📱 Initializing device info...');
+    _logger.i('📱 Initializing device info...');
     try {
       final deviceInfo = DeviceInfoPlugin();
       getIt.registerSingleton<DeviceInfoPlugin>(deviceInfo);
 
       if (kIsWeb) {
         final webInfo = await deviceInfo.webBrowserInfo;
-        logger.i('  ✓ Browser: ${webInfo.browserName}');
+        _logger.i('  ✓ Browser: ${webInfo.browserName}');
       } else if (defaultTargetPlatform == TargetPlatform.android) {
         final androidInfo = await deviceInfo.androidInfo;
-        logger.i(
+        _logger.i(
           '  ✓ Device: ${androidInfo.model} (Android ${androidInfo.version.release})',
         );
       } else if (defaultTargetPlatform == TargetPlatform.iOS) {
         final iosInfo = await deviceInfo.iosInfo;
-        logger.i(
+        _logger.i(
           '  ✓ Device: ${iosInfo.utsname.machine} (iOS ${iosInfo.systemVersion})',
         );
       }
     } catch (e, stack) {
-      logger.e('  ✗ Device info failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Device info failed', error: e, stackTrace: stack);
     }
   }
 
   /// Initialize bloc observer
   static Future<void> _initializeBlocObserver() async {
-    logger.i('🔥 Initializing bloc observer...');
+    _logger.i('🔥 Initializing bloc observer...');
     try {
       Bloc.observer = getIt<AppBlocObserver>();
-      logger.i('  ✓ Bloc observer initialized');
+      _logger.i('  ✓ Bloc observer initialized');
     } catch (e, stack) {
-      logger.e('  ✗ Bloc observer initialization failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Bloc observer initialization failed', error: e, stackTrace: stack);
     }
   }
 
@@ -209,13 +209,13 @@ class AppInitializer {
       final connectivityService = getIt<ConnectivityService>();
       await connectivityService.initialize();
     } catch (e, stack) {
-      logger.e('  ✗ Connectivity failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Connectivity failed', error: e, stackTrace: stack);
     }
   }
 
   /// Initialize storage is working
   static Future<void> _initializeStorage() async {
-    logger.i('💾 Validating storage...');
+    _logger.i('💾 Validating storage...');
     try {
       // Get all storage implementations
       final sharedPrefs = getIt<LocalStorage>(
@@ -240,9 +240,9 @@ class AppInitializer {
       await secureStorage.write('_init_test', 'secure_test');
       await hiveStorage.write('_init_test', true);
 
-      logger.i('  ✓ All storage systems operational');
+      _logger.i('  ✓ All storage systems operational');
     } catch (e, stack) {
-      logger.e('  ✗ Storage validation failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Storage validation failed', error: e, stackTrace: stack);
       if (_env.isProduction) {
         // In production, storage failure might be critical
         throw Exception('Storage initialization failed: $e');
@@ -253,7 +253,7 @@ class AppInitializer {
   /// Delegate all Firebase init to FirebaseService (single owner).
   static Future<void> _initializeFirebaseServices() async {
     if (!_env.shouldUseFirebase) {
-      logger.i('🔥 Firebase skipped (not enabled for ${_env.flavorName})');
+      _logger.i('🔥 Firebase skipped (not enabled for ${_env.flavorName})');
       return;
     }
     await getIt<FirebaseService>().initialize();
@@ -263,7 +263,7 @@ class AppInitializer {
   // static Future<void> _initializeSentry() async {
   //   if (!_env.shouldUseSentry) return;
 
-  //   AppLogger.log.i('📡 Initializing Sentry...');
+  //   LoggerService.log.i('📡 Initializing Sentry...');
 
   //   try {
   //     final sentryService = GetIt.instance<SentryService>();
@@ -280,7 +280,7 @@ class AppInitializer {
   //     sentryService.setTag('platform', defaultTargetPlatform.name);
   //     sentryService.setTag('flavor', _env.flavorName);
 
-  //     AppLogger.log.i('  ✓ Sentry ready');
+  //     LoggerService.log.i('  ✓ Sentry ready');
   //   } catch (e, stack) {
   //     Logger.error('  ✗ Sentry initialization failed', e, stack);
   //   }
@@ -290,7 +290,7 @@ class AppInitializer {
   static Future<void> _initializeSentryService() async {
     if (!_env.shouldUseSentry) return;
 
-    logger.i('📡 Initializing Sentry...');
+    _logger.i('📡 Initializing Sentry...');
 
     try {
       await getIt<SentryService>().initialize(
@@ -299,20 +299,20 @@ class AppInitializer {
         version: _appConfig.appVersion,
       );
 
-      logger.i('  ✓ Sentry ready');
+      _logger.i('  ✓ Sentry ready');
     } catch (e, stack) {
-      logger.e('  ✗ Sentry initialization failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Sentry initialization failed', error: e, stackTrace: stack);
     }
   }
 
   // /// Initialize Deep Linking
   // static Future<void> _initializeDeepLinkService() async {
-  //   AppLogger.log.i('🔗 Initializing Deep Link Service...');
+  //   LoggerService.log.i('🔗 Initializing Deep Link Service...');
 
   //   try {
   //     final deepLinkService = GetIt.instance<DeepLinkService>();
   //     await deepLinkService.initialize();
-  //     AppLogger.log.i('  ✓ Deep linking ready');
+  //     LoggerService.log.i('  ✓ Deep linking ready');
   //   } catch (e, stack) {
   //     Logger.error('  ✗ Deep linking failed', e, stack);
   //   }
@@ -320,21 +320,21 @@ class AppInitializer {
 
   /// Initialize Notification Service (local notifications)
   static Future<void> _initializeNotificationService() async {
-    logger.i('🔔 Initializing Notification Service...');
+    _logger.i('🔔 Initializing Notification Service...');
     try {
       final notificationService = getIt<NotificationService>();
       await notificationService.initialize();
 
       // Listen to notification taps
       notificationService.onNotificationTap.listen((data) {
-        logger.i('  📨 Notification tapped: $data');
+        _logger.i('  📨 Notification tapped: $data');
         // Handle navigation based on notification data
         _handleNotificationNavigation(data);
       });
 
-      logger.i('  ✓ Notification service ready');
+      _logger.i('  ✓ Notification service ready');
     } catch (e, stack) {
-      logger.e('  ✗ Notification service failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Notification service failed', error: e, stackTrace: stack);
     }
   }
 
@@ -345,11 +345,11 @@ class AppInitializer {
       final route = data['route'];
       if (route != null) {
         // Navigate to route
-        logger.i('  Navigating to: $route');
+        _logger.i('  Navigating to: $route');
         // navigationService.push(route);
       }
     } catch (e) {
-      logger.e('Failed to handle notification navigation', error: e);
+      _logger.e('Failed to handle notification navigation', error: e);
     }
   }
 
@@ -357,20 +357,20 @@ class AppInitializer {
   static Future<void> _initializeNotificationChannels() async {
     if (defaultTargetPlatform != TargetPlatform.android) return;
 
-    logger.i('🔔 Initializing Notification Channels...');
+    _logger.i('🔔 Initializing Notification Channels...');
 
     try {
       // This is handled by NotificationService.initialize()
       // Just verify it's working
-      logger.i('  ✓ Notification channels ready');
+      _logger.i('  ✓ Notification channels ready');
     } catch (e, stack) {
-      logger.e('  ✗ Notification channels failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Notification channels failed', error: e, stackTrace: stack);
     }
   }
 
   /// Warm up caches
   static Future<void> _warmUpCaches() async {
-    logger.i('🔥 Warming up caches...');
+    _logger.i('🔥 Warming up caches...');
 
     try {
       final cacheBox = await getIt<Future<Box>>(
@@ -379,15 +379,15 @@ class AppInitializer {
       // Pre-load common data
       // await GetIt.instance<ProductsRepository>().getCachedProducts();
       // await GetIt.instance<SettingsRepository>().getSettings();
-      logger.i('  ✓ Cache warmed up');
+      _logger.i('  ✓ Cache warmed up');
     } catch (e, stack) {
-      logger.e('  ✗ Cache warm-up failed', error: e, stackTrace: stack);
+      _logger.e('  ✗ Cache warm-up failed', error: e, stackTrace: stack);
     }
   }
   
   /// Dispose
   // static Future<void> dispose() async {
-  //   logger.i('Disposing app initializer');
+  //   _logger.i('Disposing app initializer');
   //   await getIt<SentryService>().close();
   //   await getIt<FirebaseService>().close();
   // }

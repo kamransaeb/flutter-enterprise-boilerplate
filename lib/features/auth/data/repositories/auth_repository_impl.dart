@@ -262,10 +262,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> loginInWithFacebook() async {
-    // logger.i('AuthRepository: Facebook sign in attempt');
+    // _logger.i('AuthRepository: Facebook sign in attempt');
     // final userModel = await remoteDataSource.signInWithFacebook();
     // await localDataSource.cacheUser(userModel);
-    // logger.i('AuthRepository: Facebook sign in successful');
+    // _logger.i('AuthRepository: Facebook sign in successful');
     return const Left(
       OperationNotAllowedFailure(
         operation: 'loginInWithFacebook',

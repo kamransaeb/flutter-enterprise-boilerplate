@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/connectivity_service.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 // 1. Point to your child files
 part 'connectivity_event.dart';
@@ -16,9 +16,13 @@ part 'connectivity_bloc.freezed.dart';
 
 @singleton
 class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
+  final LoggerService _logger;
 
-  ConnectivityBloc({required ConnectivityService connectivityService})
-    : _connectivityService = connectivityService,
+  ConnectivityBloc({
+    required ConnectivityService connectivityService,
+    required LoggerService logger,
+  })  : _connectivityService = connectivityService,
+        _logger = logger,
       super(const ConnectivityState.initial()) {
     on<_EventLoaded>(_onEventLoaded);
     on<_EventLost>(_onEventLost);
@@ -37,7 +41,7 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
     _EventLoaded event,
     Emitter<ConnectivityState> emit,
   ) async {
-    logger.i('ConnectivityBloc: Loading connectivity...');
+    _logger.i('ConnectivityBloc: Loading connectivity...');
     try {
       InternetQuality internetQuality =
           await _connectivityService.checkInternetQuality;
@@ -55,7 +59,7 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
 
       _connectivitySubscription = _connectivityService.onConnectivityChanged
           .listen((result) {
-            logger.d('[onConnectivityChanged] Connectivity changed: $result');
+            _logger.d('[onConnectivityChanged] Connectivity changed: $result');
             //_handleConnectivityChange(result, emit);
             add(
               ConnectivityEvent.changed(
@@ -76,7 +80,7 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
     _EventChanged event,
     Emitter<ConnectivityState> emit,
   ) async {
-    logger.d('[_onConnectivityChanged] Connectivity changed: ${event.connectionType ?? 'Unknown'}');
+    _logger.d('[_onConnectivityChanged] Connectivity changed: ${event.connectionType ?? 'Unknown'}');
     if (!event.isConnected) {
       add(const ConnectivityEvent.lost());
       return;
@@ -159,7 +163,7 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
     Emitter<ConnectivityState> emit,
   ) async {
     if (state.isConnected) {
-      logger.i('ConnectivityBloc: Connection lost');
+      _logger.i('ConnectivityBloc: Connection lost');
       _disconnectedAt = DateTime.now();
       emit(
         ConnectivityState.disconnected(lastDisconnectedAt: _disconnectedAt),

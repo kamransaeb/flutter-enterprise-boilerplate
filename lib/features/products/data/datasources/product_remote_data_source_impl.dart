@@ -1,5 +1,6 @@
 import 'dart:core';
 
+import 'package:flutter_enterprise_boilerplate/features/products/data/api/product_api_client.dart';
 import 'package:flutter_enterprise_boilerplate/features/products/data/datasources/product_remote_data_source.dart';
 import 'package:flutter_enterprise_boilerplate/features/products/data/models/product_category_model.dart';
 import 'package:flutter_enterprise_boilerplate/features/products/data/models/product_model.dart';
@@ -7,14 +8,15 @@ import 'package:flutter_enterprise_boilerplate/features/products/data/models/pro
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/api_client.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/api_response.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/response_converter.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 @LazySingleton(as: ProductRemoteDataSource)
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
-  ProductRemoteDataSourceImpl(this._apiClient);
+  final LoggerService _logger;
+  ProductRemoteDataSourceImpl(this._productApiClient, this._logger);
 
-  final ApiClient _apiClient;
+  final ProductApiClient _productApiClient;
 
   @override
   Future<ApiResponse<List<ProductModel>>> getProducts({
@@ -30,7 +32,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     String? sortOrder,
   }) async {
     try {
-      final httpResponse = await _apiClient.getProducts(
+      final httpResponse = await _productApiClient.getProducts(
         page: page,
         limit: limit,
         category: category,
@@ -55,7 +57,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] getProducts failed',
         error: e,
         stackTrace: stackTrace,
@@ -69,7 +71,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     required String productId,
   }) async {
     try {
-      final httpResponse = await _apiClient.getProductById(
+      final httpResponse = await _productApiClient.getProductById(
         productId: productId,
       );
       final apiResponse = ResponseConverter.toApiResponse<ProductModel>(
@@ -82,7 +84,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] getProductById failed',
         error: e,
         stackTrace: stackTrace,
@@ -92,11 +94,32 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<ApiResponse<List<ProductModel>>> getFeaturedProducts({
-    int limit = 10,
-  }) async {
+  Future<ApiResponse<List<ProductModel>>> getRelatedProducts({required String productId}) async {
     try {
-      final httpResponse = await _apiClient.getFeaturedProducts(limit: limit);
+      final httpResponse = await _productApiClient.getRelatedProducts(productId: productId);
+      final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
+        httpResponse.response,
+        (json) => _parseProductList(json),
+      );
+      if (apiResponse.isSuccess) return apiResponse;
+      return ErrorApiResponse(
+          statusCode: httpResponse.response.statusCode,
+        error: ResponseConverter.toErrorResponse(httpResponse.response),
+      );
+    } catch (e, stackTrace) {
+      _logger.e(
+        '[ProductRemoteDataSourceImpl] getRelatedProducts failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ErrorApiResponse.fromException(e, stackTrace: stackTrace);
+    }
+  }
+  
+  @override
+  Future<ApiResponse<List<ProductModel>>> searchProducts({required String query, int page = 1, int limit = 20}) async {
+    try {
+      final httpResponse = await _productApiClient.searchProducts(query: query, page: page, limit: limit);
       final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
         httpResponse.response,
         (json) => _parseProductList(json),
@@ -107,7 +130,32 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
+        '[ProductRemoteDataSourceImpl] searchProducts failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ErrorApiResponse.fromException(e, stackTrace: stackTrace);
+    }
+  }
+  
+  @override
+  Future<ApiResponse<List<ProductModel>>> getFeaturedProducts({
+    int limit = 10,
+  }) async {
+    try {
+      final httpResponse = await _productApiClient.getFeaturedProducts(limit: limit);
+      final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
+        httpResponse.response,
+        (json) => _parseProductList(json),
+      );
+      if (apiResponse.isSuccess) return apiResponse;
+      return ErrorApiResponse(
+        statusCode: httpResponse.response.statusCode,
+        error: ResponseConverter.toErrorResponse(httpResponse.response),
+      );
+    } catch (e, stackTrace) {
+      _logger.e(
         '[ProductRemoteDataSourceImpl] getFeaturedProducts failed',
         error: e,
         stackTrace: stackTrace,
@@ -120,7 +168,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     String? parentId,
   }) async {
     try {
-      final httpResponse = await _apiClient.getCategories(parentId: parentId);
+      final httpResponse = await _productApiClient.getCategories(parentId: parentId);
       final apiResponse =
           ResponseConverter.toApiResponse<List<ProductCategoryModel>>(
             httpResponse.response,
@@ -132,7 +180,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] getCategories failed',
         error: e,
         stackTrace: stackTrace,
@@ -147,7 +195,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int limit = 20,
   }) async {
     try {
-      final httpResponse = await _apiClient.getProductReviews(
+      final httpResponse = await _productApiClient.getProductReviews(
         productId: productId,
         page: page,
         limit: limit,
@@ -163,7 +211,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] getProductReviews failed',
         error: e,
         stackTrace: stackTrace,
@@ -179,7 +227,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     required ProductReviewModel productReviewModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.addProductReview(
+      final httpResponse = await _productApiClient.addProductReview(
         productId: productId,
         productReviewModel: productReviewModel,
       );
@@ -193,7 +241,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] addProductReview failed',
         error: e,
         stackTrace: stackTrace,
@@ -204,13 +252,13 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   Future<ApiResponse<void>> toggleWishlist({required String productId}) async {
     try {
-      final wishlistResponse = await _apiClient.getWishlist();
+      final wishlistResponse = await _productApiClient.getWishlist();
       final wishList = _parseWishlistProducts(wishlistResponse.response.data);
       final isInWishlist = wishList.contains(productId);
 
       final httpResponse = isInWishlist
-          ? await _apiClient.removeFromWishlist(productId)
-          : await _apiClient.addToWishlist({'product_id': productId});
+          ? await _productApiClient.removeFromWishlist(productId: productId)
+          : await _productApiClient.addToWishlist(productId: productId);
 
       final apiResponse = ResponseConverter.toApiResponse<void>(
         httpResponse.response,
@@ -223,7 +271,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] toggleFavorite failed',
         error: e,
         stackTrace: stackTrace,
@@ -238,7 +286,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int limit = 20,
   }) async {
     try {
-      final httpResponse = await _apiClient.getWishlist();
+      final httpResponse = await _productApiClient.getWishlist();
       final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
         httpResponse.response,
         (json) => _parseWishlistProducts(json),
@@ -261,7 +309,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       final end = (start + limit).clamp(0, all.length);
       return SuccessResponse.fromData(all.sublist(start, end));
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] getFavorites failed',
         error: e,
         stackTrace: stackTrace,
@@ -275,7 +323,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     required String productId,
   }) async {
     try {
-      final httpResponse = await _apiClient.removeFromWishlist(productId);
+      final httpResponse = await _productApiClient.removeFromWishlist(productId: productId);
       final apiResponse = ResponseConverter.toApiResponse<void>(
         httpResponse.response,
         (json) => null,
@@ -286,7 +334,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] removeFromWishlist failed',
         error: e,
         stackTrace: stackTrace,
@@ -298,9 +346,9 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<ApiResponse<void>> addToWishlist({required String productId}) async {
     try {
-      final httpResponse = await _apiClient.addToWishlist({
-        'product_id': productId,
-      });
+      final httpResponse = await _productApiClient.addToWishlist(
+         productId: productId,
+      );
       final apiResponse = ResponseConverter.toApiResponse<void>(
         httpResponse.response,
         (json) => null,
@@ -311,7 +359,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         error: ResponseConverter.toErrorResponse(httpResponse.response),
       );
     } catch (e, stackTrace) {
-      logger.e(
+      _logger.e(
         '[ProductRemoteDataSourceImpl] addToWishlist failed',
         error: e,
         stackTrace: stackTrace,
@@ -325,7 +373,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int limit = 10,
   }) async {
     try {
-      final httpResponse = await _apiClient.getRecentlyViewed(limit: limit);
+      final httpResponse = await _productApiClient.getRecentlyViewed(limit: limit);
       final apiResponse = ResponseConverter.toApiResponse<List<ProductModel>>(
         httpResponse.response,
         (json) => _parseProductList(json),
@@ -339,25 +387,52 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       return ErrorApiResponse.fromException(e, stackTrace: stackTrace);
     }
   }
-
   @override
-  Future<ApiResponse<List<ProductModel>>> getRelatedProducts({
-    required String productId,
-  }) {
-    // TODO: implement getRelatedProducts
-    throw UnimplementedError();
+  Future<ApiResponse<void>> addToRecentlyViewed({required String productId}) async {
+    try {
+      final httpResponse = await _productApiClient.addToRecentlyViewed(productId: productId);
+      final apiResponse = ResponseConverter.toApiResponse<void>(
+        httpResponse.response,
+        (json) => null,
+      );
+      if (apiResponse.isSuccess) return apiResponse;
+      return ErrorApiResponse(
+        statusCode: httpResponse.response.statusCode,
+        error: ResponseConverter.toErrorResponse(httpResponse.response),
+      );
+    } catch (e, stackTrace) {
+      _logger.e(
+        '[ProductRemoteDataSourceImpl] addToRecentlyViewed failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ErrorApiResponse.fromException(e, stackTrace: stackTrace);
+    }
   }
-
+  
   @override
-  Future<ApiResponse<List<ProductModel>>> searchProducts({
-    required String query,
-    int page = 1,
-    int limit = 20,
-  }) {
-    // TODO: implement searchProducts
-    throw UnimplementedError();
+  Future<ApiResponse<void>> removeFromRecentlyViewed({required String productId}) async {
+    try {
+      final httpResponse = await _productApiClient.removeFromRecentlyViewed(productId: productId);
+      final apiResponse = ResponseConverter.toApiResponse<void>(
+        httpResponse.response,
+        (json) => null,
+      );
+      if (apiResponse.isSuccess) return apiResponse;
+      return ErrorApiResponse(
+        statusCode: httpResponse.response.statusCode,
+        error: ResponseConverter.toErrorResponse(httpResponse.response),
+      );
+    } catch (e, stackTrace) {
+      _logger.e(
+        '[ProductRemoteDataSourceImpl] removeFromRecentlyViewed failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ErrorApiResponse.fromException(e, stackTrace: stackTrace);
+    }
   }
-
+  
   List<ProductModel> _parseProductList(dynamic json) {
     if (json is List) {
       return json
@@ -446,4 +521,5 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     }
     return [];
   }
+  
 }

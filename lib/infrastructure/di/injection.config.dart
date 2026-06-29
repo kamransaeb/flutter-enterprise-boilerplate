@@ -14,7 +14,6 @@ import 'package:device_info_plus/device_info_plus.dart' as _i833;
 import 'package:dio/dio.dart' as _i361;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
-import 'package:hive/hive.dart' as _i979;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart'
     as _i161;
@@ -23,9 +22,12 @@ import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import '../../app/app_bloc_observer.dart' as _i492;
 import '../../app/app_config.dart' as _i861;
 import '../../app/app_initializer.dart' as _i750;
+import '../../core/bloc/app_lifecycle/app_lifecycle_bloc.dart' as _i1003;
 import '../../core/bloc/connectivity/connectivity_bloc.dart' as _i1027;
+import '../../core/bloc/locale/locale_bloc.dart' as _i733;
 import '../../core/bloc/theme/theme_bloc.dart' as _i339;
 import '../../core/navigation/app_router.dart' as _i400;
+import '../../core/services/logger_service.dart' as _i903;
 import '../../core/utils/helpers/network_helper.dart' as _i675;
 import '../../features/auth/data/api/auth_api_client.dart' as _i541;
 import '../../features/auth/data/datasources/auth_local_data_source.dart'
@@ -80,7 +82,6 @@ import '../../features/products/presentation/bloc/products_bloc.dart' as _i975;
 import '../../features/user/data/api/user_api_client.dart' as _i240;
 import '../cache/cache_manager.dart' as _i326;
 import '../cache/cache_manager_impl.dart' as _i536;
-import '../network/client/api_client.dart' as _i211;
 import '../network/client/dio_client.dart' as _i870;
 import '../network/client/interceptors/cache_interceptor.dart' as _i644;
 import '../network/client/interceptors/error_interceptor.dart' as _i137;
@@ -91,12 +92,13 @@ import '../services/connectivity_service.dart' as _i47;
 import '../services/environment_service.dart' as _i488;
 import '../services/firebase/firebase_service.dart' as _i376;
 import '../services/location_service.dart' as _i669;
-import '../services/logger_service.dart' as _i141;
+import '../services/logger_service_impl.dart' as _i921;
 import '../services/navigation_service.dart' as _i31;
 import '../services/notification_service.dart' as _i941;
 import '../services/remote_config_service.dart' as _i858;
 import '../services/sentry_service.dart' as _i343;
 import '../storage/local_storage.dart' as _i329;
+import '../storage/secure_storage.dart' as _i619;
 import 'modules/network_module.dart' as _i851;
 import 'modules/storage_module.dart' as _i148;
 
@@ -118,11 +120,8 @@ Future<_i174.GetIt> $initGetIt(
   gh.singleton<_i558.FlutterSecureStorage>(
     () => storageModule.flutterSecureStorage,
   );
-  gh.singleton<_i27.JsonTransformer>(() => _i27.JsonTransformer());
   gh.singleton<_i374.BiometricService>(() => _i374.BiometricService());
-  gh.singleton<_i47.ConnectivityService>(() => _i47.ConnectivityService());
   gh.singleton<_i669.LocationService>(() => _i669.LocationService());
-  gh.singleton<_i141.LoggerService>(() => _i141.LoggerService());
   gh.lazySingleton<_i895.Connectivity>(() => networkModule.connectivity);
   gh.lazySingleton<_i161.InternetConnection>(
     () => networkModule.internetConnection,
@@ -131,37 +130,6 @@ Future<_i174.GetIt> $initGetIt(
     () => networkModule.deviceInfoPlugin,
   );
   gh.lazySingleton<_i137.ErrorInterceptor>(() => _i137.ErrorInterceptor());
-  gh.singleton<String>(
-    () => storageModule.onboardingCompletedKey,
-    instanceName: 'onboarding_completed_key',
-  );
-  await gh.singletonAsync<_i979.Box<dynamic>>(
-    () => storageModule.cacheBox,
-    instanceName: 'cache_box',
-    preResolve: true,
-  );
-  gh.singleton<String>(
-    () => storageModule.refreshTokenKey,
-    instanceName: 'refresh_token_key',
-  );
-  await gh.singletonAsync<_i979.Box<dynamic>>(
-    () => storageModule.ordersBox,
-    instanceName: 'orders_box',
-    preResolve: true,
-  );
-  await gh.singletonAsync<_i979.Box<dynamic>>(
-    () => storageModule.userBox,
-    instanceName: 'user_box',
-    preResolve: true,
-  );
-  gh.singleton<String>(
-    () => storageModule.localeKey,
-    instanceName: 'locale_key',
-  );
-  gh.singleton<String>(
-    () => storageModule.themeModeKey,
-    instanceName: 'theme_mode_key',
-  );
   gh.singleton<_i329.LocalStorage>(
     () => storageModule.sharedPrefsStorage(
       gh<_i460.SharedPreferences>(),
@@ -169,86 +137,117 @@ Future<_i174.GetIt> $initGetIt(
     ),
     instanceName: 'shared_prefs',
   );
-  await gh.singletonAsync<_i979.Box<dynamic>>(
-    () => storageModule.notificationsBox,
-    instanceName: 'notifications_box',
-    preResolve: true,
-  );
-  await gh.singletonAsync<_i979.Box<dynamic>>(
-    () => storageModule.settingsBox,
-    instanceName: 'settings_box',
-    preResolve: true,
-  );
-  await gh.singletonAsync<_i979.Box<dynamic>>(
-    () => storageModule.apiCacheBox,
-    instanceName: 'api_cache_box',
-    preResolve: true,
-  );
-  gh.singleton<String>(
-    () => storageModule.authTokenKey,
-    instanceName: 'auth_token_key',
-  );
-  gh.singleton<_i1027.ConnectivityBloc>(
-    () => _i1027.ConnectivityBloc(
-      connectivityService: gh<_i47.ConnectivityService>(),
-    ),
-  );
   gh.singleton<_i488.EnvironmentService>(
     () => _i488.EnvironmentService(gh<_i861.AppConfig>()),
   );
   gh.singleton<_i858.RemoteConfigService>(
     () => _i858.RemoteConfigService(gh<_i861.AppConfig>()),
   );
+  gh.singleton<_i903.LoggerService>(
+    () => _i921.LoggerServiceImpl(gh<_i861.AppConfig>()),
+  );
+  gh.singleton<_i376.FirebaseService>(
+    () => _i376.FirebaseService(
+      gh<_i861.AppConfig>(),
+      gh<_i488.EnvironmentService>(),
+      gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.lazySingleton<_i107.AuthRemoteDataSource>(
+    () => _i123.AuthRemoteDataSourceImpl(
+      gh<InvalidType>(),
+      gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.singleton<_i1003.AppLifecycleBloc>(
+    () => _i1003.AppLifecycleBloc(gh<_i903.LoggerService>()),
+  );
+  gh.singleton<_i27.JsonTransformer>(
+    () => _i27.JsonTransformer(gh<_i903.LoggerService>()),
+  );
+  gh.singleton<_i47.ConnectivityService>(
+    () => _i47.ConnectivityService(gh<_i903.LoggerService>()),
+  );
+  gh.singleton<_i343.SentryService>(
+    () => _i343.SentryService(
+      gh<_i488.EnvironmentService>(),
+      gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.singleton<_i733.LocaleBloc>(
+    () => _i733.LocaleBloc(
+      localStorage: gh<_i329.LocalStorage>(instanceName: 'shared_prefs'),
+      logger: gh<_i903.LoggerService>(),
+    ),
+  );
   gh.lazySingleton<_i831.HeaderInterceptor>(
     () => _i831.HeaderInterceptor(
       gh<_i861.AppConfig>(),
       gh<_i833.DeviceInfoPlugin>(),
+      gh<_i903.LoggerService>(),
     ),
   );
-  gh.singleton<_i870.DioClient>(
-    () => _i870.DioClient(gh<_i861.AppConfig>(), gh<_i833.DeviceInfoPlugin>()),
+  gh.singleton<_i675.NetworkHelper>(
+    () => _i675.NetworkHelper(
+      gh<_i895.Connectivity>(),
+      gh<_i161.InternetConnection>(),
+      gh<_i903.LoggerService>(),
+    ),
   );
-  gh.singleton<String>(
-    () => storageModule.userIdKey,
-    instanceName: 'user_id_key',
-  );
-  await gh.singletonAsync<_i979.Box<dynamic>>(
-    () => storageModule.productsBox,
-    instanceName: 'products_box',
-    preResolve: true,
-  );
-  gh.lazySingleton<_i361.Dio>(() => networkModule.dio(gh<_i870.DioClient>()));
   gh.singleton<_i329.LocalStorage>(
     () => storageModule.secureStorage(
       gh<_i558.FlutterSecureStorage>(),
       gh<_i861.AppConfig>(),
+      gh<_i903.LoggerService>(),
     ),
     instanceName: 'secure_storage',
   );
   gh.singleton<_i329.LocalStorage>(
     () => storageModule.hiveStorage(
       gh<_i488.EnvironmentService>(),
-      gh<_i979.Box<dynamic>>(instanceName: 'settings_box'),
-      gh<_i979.Box<dynamic>>(instanceName: 'user_box'),
-      gh<_i979.Box<dynamic>>(instanceName: 'cache_box'),
-      gh<_i979.Box<dynamic>>(instanceName: 'products_box'),
-      gh<_i979.Box<dynamic>>(instanceName: 'orders_box'),
-      gh<_i979.Box<dynamic>>(instanceName: 'notifications_box'),
-      gh<_i979.Box<dynamic>>(instanceName: 'api_cache_box'),
+      gh<_i903.LoggerService>(),
     ),
     instanceName: 'hive_storage',
   );
-  gh.singleton<_i343.SentryService>(
-    () => _i343.SentryService(gh<_i488.EnvironmentService>()),
-  );
-  gh.singleton<_i675.NetworkHelper>(
-    () => _i675.NetworkHelper(
-      gh<_i895.Connectivity>(),
-      gh<_i161.InternetConnection>(),
+  gh.singleton<_i31.NavigationService>(
+    () => _i31.NavigationService(
+      gh<_i400.AppRouter>(),
+      gh<_i903.LoggerService>(),
     ),
   );
-  gh.singleton<_i31.NavigationService>(
-    () => _i31.NavigationService(gh<_i400.AppRouter>()),
+  gh.lazySingleton<_i326.CacheManager>(
+    () => _i536.CacheManagerImpl(
+      gh<_i329.LocalStorage>(instanceName: 'hive_storage'),
+      gh<_i861.AppConfig>(),
+      gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.singleton<_i492.AppBlocObserver>(
+    () => _i492.AppBlocObserver(
+      appConfig: gh<_i861.AppConfig>(),
+      logger: gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.singleton<_i339.ThemeBloc>(
+    () => _i339.ThemeBloc(
+      localStorage: gh<_i329.LocalStorage>(instanceName: 'hive_storage'),
+      logger: gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.lazySingleton<_i644.CacheInterceptor>(
+    () => _i644.CacheInterceptor(
+      cacheManager: gh<_i326.CacheManager>(),
+      logger: gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.singleton<_i870.DioClient>(
+    () => _i870.DioClient(
+      gh<_i861.AppConfig>(),
+      gh<_i833.DeviceInfoPlugin>(),
+      gh<_i619.SecureStorage>(),
+      gh<_i326.CacheManager>(),
+      gh<_i903.LoggerService>(),
+    ),
   );
   gh.singleton<_i541.AuthApiClient>(
     () => _i541.AuthApiClient(gh<_i870.DioClient>()),
@@ -265,51 +264,40 @@ Future<_i174.GetIt> $initGetIt(
   gh.singleton<_i240.UserApiClient>(
     () => _i240.UserApiClient(gh<_i870.DioClient>()),
   );
-  gh.singleton<_i211.ApiClient>(() => _i211.ApiClient(gh<_i870.DioClient>()));
-  gh.singleton<_i492.AppBlocObserver>(
-    () => _i492.AppBlocObserver(appConfig: gh<_i861.AppConfig>()),
-  );
-  gh.lazySingleton<_i823.ProductLocalDataSource>(
-    () => _i27.ProductLocalDataSourceImpl(
-      hiveStorage: gh<_i329.LocalStorage>(instanceName: 'hive_storage'),
-    ),
-  );
-  gh.singleton<_i339.ThemeBloc>(
-    () => _i339.ThemeBloc(
-      localStorage: gh<_i329.LocalStorage>(instanceName: 'hive_storage'),
-    ),
-  );
-  gh.singleton<_i376.FirebaseService>(
-    () => _i376.FirebaseService(
-      gh<_i861.AppConfig>(),
-      gh<_i488.EnvironmentService>(),
-    ),
-  );
   gh.lazySingleton<_i852.AuthLocalDataSource>(
     () => _i301.AuthLocalDataSourceImpl(
       secureStorage: gh<_i329.LocalStorage>(instanceName: 'secure_storage'),
       sharedPrefsStorage: gh<_i329.LocalStorage>(instanceName: 'shared_prefs'),
       hiveStorage: gh<_i329.LocalStorage>(instanceName: 'hive_storage'),
+      logger: gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.singleton<_i1027.ConnectivityBloc>(
+    () => _i1027.ConnectivityBloc(
+      connectivityService: gh<_i47.ConnectivityService>(),
+      logger: gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.lazySingleton<_i166.ProductRemoteDataSource>(
+    () => _i818.ProductRemoteDataSourceImpl(
+      gh<_i865.ProductApiClient>(),
+      gh<_i903.LoggerService>(),
     ),
   );
   gh.singleton<_i941.NotificationService>(
     () => _i941.NotificationService(
       gh<_i488.EnvironmentService>(),
       gh<_i329.LocalStorage>(instanceName: 'secure_storage'),
+      gh<_i903.LoggerService>(),
     ),
   );
-  gh.lazySingleton<_i107.AuthRemoteDataSource>(
-    () => _i123.AuthRemoteDataSourceImpl(gh<_i211.ApiClient>()),
-  );
-  gh.lazySingleton<_i326.CacheManager>(
-    () => _i536.CacheManagerImpl(
-      gh<_i329.LocalStorage>(instanceName: 'hive_storage'),
-      gh<_i861.AppConfig>(),
+  gh.lazySingleton<_i823.ProductLocalDataSource>(
+    () => _i27.ProductLocalDataSourceImpl(
+      hiveStorage: gh<_i329.LocalStorage>(instanceName: 'hive_storage'),
+      logger: gh<_i903.LoggerService>(),
     ),
   );
-  gh.lazySingleton<_i166.ProductRemoteDataSource>(
-    () => _i818.ProductRemoteDataSourceImpl(gh<_i211.ApiClient>()),
-  );
+  gh.lazySingleton<_i361.Dio>(() => networkModule.dio(gh<_i870.DioClient>()));
   gh.lazySingleton<_i787.AuthRepository>(
     () => _i153.AuthRepositoryImpl(
       gh<_i107.AuthRemoteDataSource>(),
@@ -368,15 +356,13 @@ Future<_i174.GetIt> $initGetIt(
       gh<_i270.ToggleFavoriteUseCase>(),
     ),
   );
-  gh.lazySingleton<_i644.CacheInterceptor>(
-    () => _i644.CacheInterceptor(cacheManager: gh<_i326.CacheManager>()),
-  );
   gh.singleton<_i797.AuthBloc>(
     () => _i797.AuthBloc(
       loginUseCase: gh<_i188.LoginUseCase>(),
       logoutUseCase: gh<_i48.LogoutUseCase>(),
       registerUseCase: gh<_i941.RegisterUseCase>(),
       authRepository: gh<_i787.AuthRepository>(),
+      logger: gh<_i903.LoggerService>(),
     ),
   );
   return getIt;

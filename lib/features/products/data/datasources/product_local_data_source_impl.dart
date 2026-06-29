@@ -8,9 +8,9 @@ import 'package:flutter_enterprise_boilerplate/features/products/data/models/pro
 import 'package:flutter_enterprise_boilerplate/features/products/data/models/product_review_model.dart';
 import 'package:flutter_enterprise_boilerplate/features/products/domain/entities/product_filter.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/paginated_cache_response.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 // *** fvm dart analyze lib/something_file.dart
 // Dart's analyzer: reads code and reports errors, warnings, and info lints.
@@ -28,21 +28,21 @@ import 'package:injectable/injectable.dart';
 // - You use a typed box like Box<ProductModel> everywhere
 @LazySingleton(as: ProductLocalDataSource)
 class ProductLocalDataSourceImpl implements ProductLocalDataSource {
+  final LoggerService _logger;
   
   ProductLocalDataSourceImpl({
     @Named('hive_storage') required LocalStorage hiveStorage,
-  }) : _hiveStorage = hiveStorage;
+    required LoggerService logger,
+  }) : _hiveStorage = hiveStorage,
+       _logger = logger;
 
   final LocalStorage _hiveStorage;
-
-  
- 
   
   @override
   Future<void> cacheFeaturedProducts({required List<ProductModel> products, int limit = 10}) async {
     
     try {
-      final key = _featuredProductsKey(limit: limit);
+      final key = _featuredProductsKey(limit);
       final payload = {
         'products': products.map((e) => e.toJson()).toList(),
         'cachedAt': DateTime.now().toIso8601String(),
@@ -58,7 +58,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   Future<List<ProductModel>> getCachedFeaturedProducts({int limit = 10}) async {
     // TODO: implement getCachedFeaturedProducts
     try {
-      final key = _featuredProductsKey(limit: limit);
+      final key = _featuredProductsKey(limit);
       final cached = await _hiveStorage.read<String>(
         key,
         boxName: StorageConstants.productsBox,
@@ -80,7 +80,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
    @override
   Future<void> cacheRelatedProducts({required String productId, required List<ProductModel> products}) async {
     try {
-      final key = _relatedProductsKey(productId: productId);
+      final key = _relatedProductsKey(productId);
       final payload = {
         'products': products.map((e) => e.toJson()).toList(),
         'cachedAt': DateTime.now().toIso8601String(),
@@ -96,7 +96,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   Future<List<ProductModel>> getCachedRelatedProducts(String productId) async  {
     // TODO: implement getCachedRelatedProducts
     try {
-      final key = _relatedProductsKey(productId: productId);
+      final key = _relatedProductsKey(productId);
       final cached = await _hiveStorage.read<String>(
         key,
         boxName: StorageConstants.productsBox,
@@ -737,7 +737,7 @@ Future<void> _invalidateCachedProductReviews({
   Future<void> clearCache() async {
     try {
       await _hiveStorage.clear(boxName: StorageConstants.productsBox);
-      logger.i('[ProductLocalDataSourceImpl] Cleared cache');
+      _logger.i('[ProductLocalDataSourceImpl] Cleared cache');
     } catch (e, stackTrace) {
       _logAndRethrow('clearCache', 'Failed to clear cache', e, stackTrace);
     }
@@ -765,7 +765,7 @@ Future<void> _invalidateCachedProductReviews({
           }
         } catch (e, stackTrace) {
           // skip this entry and continue with the next one
-          logger.e(
+          _logger.e(
             '[ProductLocalDataSourceImpl] Failed to decode cached value',
             error: e,
             stackTrace: stackTrace,
@@ -887,7 +887,7 @@ Future<void> _invalidateCachedProductReviews({
     Object? e,
     StackTrace stackTrace,
   ) {
-    logger.e(
+    _logger.e(
       '[ProductLocalDataSourceImpl] $methodName failed: $errorMessage',
       error: e,
       stackTrace: stackTrace,
@@ -926,7 +926,7 @@ Future<void> _invalidateCachedProductReviews({
         );
       } catch (e, stackTrace) {
         // skip this entry and continue with the next one
-        logger.e(
+        _logger.e(
           '[ProductLocalDataSourceImpl] Failed to decode cached product',
           error: e,
           stackTrace: stackTrace,

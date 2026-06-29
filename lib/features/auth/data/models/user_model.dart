@@ -8,7 +8,7 @@ part 'user_model.g.dart';
 // With freezed 3 the public class must be abstract.
 @freezed
 abstract class UserModel with _$UserModel {
-  const UserModel._();  // ← enables custom methods on generated class UserModel.toEntity()
+  const UserModel._();  //*** ← enables custom methods on generated class UserModel.toEntity()
 
   const factory UserModel({
     required String id,

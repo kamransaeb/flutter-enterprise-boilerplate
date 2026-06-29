@@ -6,8 +6,9 @@ import 'package:flutter_enterprise_boilerplate/core/bloc/connectivity/connectivi
 import 'package:flutter_enterprise_boilerplate/core/bloc/locale/locale_bloc.dart';
 import 'package:flutter_enterprise_boilerplate/core/bloc/theme/theme_bloc.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
+import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
 
 /// Main App widget that sets up all the necessary blocs and providers
 /// following VGV enterprise pattern with proper dependency injection
@@ -19,6 +20,7 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  late final LoggerService _logger = getIt<LoggerService>();
   late final AppLifecycleBloc _lifecycleBloc;
   late final AuthBloc _authBloc;
   late final ThemeBloc _themeBloc;
@@ -56,9 +58,9 @@ class _AppState extends State<App> {
         _isInitialized = true;
       });
       
-      logger.i('App: All blocs initialized successfully');
+      _logger.i('App: All blocs initialized successfully');
     } catch (error, stackTrace) {
-      logger.e('App: Failed to initialize blocs', 
+      _logger.e('App: Failed to initialize blocs', 
           error: error, 
           stackTrace: stackTrace);
       // Even if initialization fails, we should still show the app
@@ -75,9 +77,9 @@ class _AppState extends State<App> {
       _lifecycleBloc.close();
       _authBloc.close();
       _themeBloc.close();
-      logger.d('App: All blocs disposed successfully');
+      _logger.d('App: All blocs disposed successfully');
     } catch (error) {
-      logger.e('App: Error disposing blocs', error: error);
+      _logger.e('App: Error disposing blocs', error: error);
     }
   }
 

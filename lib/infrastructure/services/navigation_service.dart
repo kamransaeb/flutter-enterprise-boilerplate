@@ -2,18 +2,19 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_enterprise_boilerplate/core/navigation/route_names.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../core/navigation/app_router.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// Navigation service is used to use where context is not available, like in 
 /// a bloc or service.
 @singleton
 class NavigationService {
+  final LoggerService _logger;
   final AppRouter _appRouter;
 
-  NavigationService(this._appRouter);
+  NavigationService(this._appRouter, this._logger);
 
   // Router access
   StackRouter get appRouter => _appRouter;
@@ -82,9 +83,9 @@ class NavigationService {
   // Named navigation methods
   void navigateToLogin({bool replaceAll = false}) {
     if (replaceAll) {
-      _appRouter.replaceAll([const LoginRoute()]);
+      _appRouter.replaceAll([LoginRoute()]);
     } else {
-      _appRouter.push(const LoginRoute());
+      _appRouter.push(LoginRoute());
     }
   }
 
@@ -144,7 +145,7 @@ class NavigationService {
         await _appRouter.pushAndPopUntil(route, predicate: (r) => r.isFirst);
       }
     } catch (e) {
-      logger.e('Error handling deep link: $e');
+      _logger.e('Error handling deep link: $e');
     }
   }
 
@@ -180,14 +181,14 @@ class NavigationService {
         if (args != null && args.containsKey(RouteParams.id)) {
           navigateToProductDetails(args[RouteParams.id] as String);
         } else {
-          logger.e('[Navigation] Product ID is required for product details');
+          _logger.e('[Navigation] Product ID is required for product details');
         }
         break;
       case RouteNames.orderDetails:
         if (args != null && args.containsKey(RouteParams.id)) {
           navigateToOrderDetails(args[RouteParams.id] as String);
         } else {
-          logger.e('Order ID is required for order details');
+          _logger.e('Order ID is required for order details');
         }
         break;
     }

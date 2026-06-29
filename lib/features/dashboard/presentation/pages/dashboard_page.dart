@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:auto_route/auto_route.dart';
 
 import '../../../../core/widgets/common/app_button.dart';
-import '../../../../routes/app_router.gr.dart';
+import '../../../../core/navigation/app_router.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 @RoutePage()
@@ -32,7 +32,6 @@ class DashboardPage extends StatelessWidget {
       ),
       drawer: const DashboardDrawer(),
       body: const DashboardBody(),
-      bottomNavigationBar: const DashboardBottomNav(),
     );
   }
 }
@@ -344,54 +343,5 @@ class DashboardBody extends StatelessWidget {
         trailing: const Text('\$349.99'),
       ),
     ];
-  }
-}
-
-class DashboardBottomNav extends StatelessWidget {
-  const DashboardBottomNav({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            context.router.replace(const DashboardRoute());
-            break;
-          case 1:
-            context.router.push(const ProductsRoute());
-            break;
-          case 2:
-            context.router.push(const CartRoute());
-            break;
-          case 3:
-            context.router.push(const ProfileRoute());
-            break;
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_bag_outlined),
-          activeIcon: Icon(Icons.shopping_bag),
-          label: 'Products',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_cart_outlined),
-          activeIcon: Icon(Icons.shopping_cart),
-          label: 'Cart',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outlined),
-          activeIcon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
-    );
   }
 }

@@ -38,7 +38,7 @@ class NavigationService {
   }
 
   void navigateToLogin() {
-    router.replaceAll([const LoginRoute()]);
+    router.replaceAll([LoginRoute()]);
   }
 
   void navigateToDashboard() {

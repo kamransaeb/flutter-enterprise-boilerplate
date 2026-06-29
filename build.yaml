@@ -60,16 +60,18 @@ targets:
         options:
           auto_cast_response: true
 
-      # AutoRoute code generation
-      auto_route_generator:
+      # AutoRoute – @RoutePage() scanner
+      auto_route_generator:auto_route_generator:
         enabled: true
         generate_for:
-          - lib/routes/app_router.dart
-        options:
-          generate_for_dir:
-            - lib/features/**/presentation/pages
-          generate_navigator_for_dir:
-            - lib/features
+          - lib/features/**/presentation/pages/**.dart
+          - lib/core/**/pages/**.dart
+
+      # AutoRoute – @AutoRouterConfig() router
+      auto_route_generator:auto_router_generator:
+        enabled: true
+        generate_for:
+          - lib/core/navigation/app_router.dart
 
 # builders:
 #   # Configure build_runner
@@ -122,13 +124,13 @@ global_options:
       serializable_class: true
 
   # AutoRoute options
-  auto_route_generator:
+  auto_route_generator:auto_route_generator:
     options:
-      generate_route_setter: true
-      generate_navigator_for_dir: true
-      use_initial_route: true
-      generate_for_dir:
-        - lib/features
+      enable_cached_builds: true
+
+  auto_route_generator:auto_router_generator:
+    options:
+      enable_cached_builds: true
       relative_imports: true
 
   # Injectable options (must match real builder id)

@@ -1,46 +1,28 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_enterprise_boilerplate/core/constants/storage_constants.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/environment_service.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/hive_adapters/user_adapter.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 class HiveStorage implements LocalStorage {
+  final LoggerService _logger;
   final EnvironmentService _env;
-  final Future<Box> _settingsBox;
-  final Future<Box> _userBox;
-  final Future<Box> _cacheBox;
-  final Future<Box> _productsBox;
-  final Future<Box> _ordersBox;
-  final Future<Box> _notificationsBox;
-  final Future<Box> _apiCacheBox;
 
   final Map<String, Box> _openBoxes = {};
+
   bool _isInitialized = false;
 
   HiveStorage({
     required EnvironmentService env,
-    required Future<Box> settingsBox,
-    required Future<Box> userBox,
-    required Future<Box> cacheBox,
-    required Future<Box> productsBox,
-    required Future<Box> ordersBox,
-    required Future<Box> notificationsBox,
-    required Future<Box> apiCacheBox,
-  }) : _env = env,
-       _settingsBox = settingsBox,
-       _userBox = userBox,
-       _cacheBox = cacheBox,
-       _productsBox = productsBox,
-       _ordersBox = ordersBox,
-       _notificationsBox = notificationsBox,
-       _apiCacheBox = apiCacheBox;
+    required LoggerService logger,
+  })  : _env = env,
+        _logger = logger;
 
   @override
   bool get isInitialized => _isInitialized;
@@ -51,7 +33,7 @@ class HiveStorage implements LocalStorage {
     if (_isInitialized) return;
 
     try {
-      logger.i('[Hive] Initializing Hive storage...');
+      _logger.i('[Hive] Initializing Hive storage...');
 
       // Get application documents directory
       final appDocumentDir = await getApplicationDocumentsDirectory();
@@ -62,13 +44,13 @@ class HiveStorage implements LocalStorage {
 
       // Open default boxes
       await Future.wait([
-        _openBox(StorageConstants.settingsBox, enableLazy: false),
-        _openBox(StorageConstants.userBox, enableLazy: false),
-        _openBox(StorageConstants.cacheBox, enableLazy: true),
-        _openBox(StorageConstants.productsBox, enableLazy: true),
-        _openBox(StorageConstants.ordersBox, enableLazy: true),
-        _openBox(StorageConstants.notificationsBox, enableLazy: true),
-        _openBox(StorageConstants.apiCacheBox, enableLazy: true),
+        _openBox(StorageConstants.settingsBox),
+        _openBox(StorageConstants.userBox),
+        _openBox(StorageConstants.cacheBox),
+        _openBox(StorageConstants.productsBox),
+        _openBox(StorageConstants.ordersBox),
+        _openBox(StorageConstants.notificationsBox),
+        _openBox(StorageConstants.apiCacheBox),
       ]);
 
       // Clear cache in development if needed
@@ -77,11 +59,11 @@ class HiveStorage implements LocalStorage {
       }
 
       _isInitialized = true;
-      logger.i(
+      _logger.i(
         '[Hive] Hive storage initialized with ${_openBoxes.length} boxes',
       );
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to initialize Hive storage',
         error: e,
         stackTrace: stack,
@@ -100,14 +82,15 @@ class HiveStorage implements LocalStorage {
   }
 
   /// Open a Hive box
-  Future<Box> _openBox(String name, {bool enableLazy = false}) async {
+  Future<Box> _openBox(String name) async {
     try {
       if (_openBoxes.containsKey(name) && _openBoxes[name]!.isOpen) {
         return _openBoxes[name]!;
       }
 
-      final box = await Hive.openBox(
+      final box = await Hive.openBox<dynamic>(
         name,
+        // 
         compactionStrategy: (entries, deletedEntries) {
           // Auto-compact when many entries are deleted
           return deletedEntries > 100;
@@ -115,10 +98,10 @@ class HiveStorage implements LocalStorage {
       );
 
       _openBoxes[name] = box;
-      logger.i('[Hive] Opened Hive box: $name');
+      _logger.i('[Hive] Opened Hive box: $name');
       return box;
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to open Hive box: $name',
         error: e,
         stackTrace: stack,
@@ -129,12 +112,18 @@ class HiveStorage implements LocalStorage {
 
   /// Get a box by name
   Box _getBox(String boxName) {
+    _ensureInitialized();
     if (!_openBoxes.containsKey(boxName) || !_openBoxes[boxName]!.isOpen) {
       throw Exception('Box $boxName is not open');
     }
     return _openBoxes[boxName]!;
   }
 
+  void _ensureInitialized() {
+    if (!_isInitialized) {
+      throw Exception('Hive storage is not initialized');
+    }
+  }
   //============================================================================
   // CRUD Operations
   //============================================================================
@@ -142,11 +131,11 @@ class HiveStorage implements LocalStorage {
   @override
   Future<void> write(String key, dynamic value, {String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       await box.put(key, value);
-      logger.i('[Hive] Wrote to Hive: $key');
+      _logger.i('[Hive] Wrote to Hive: $key');
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to write to Hive: $key',
         error: e,
         stackTrace: stack,
@@ -158,11 +147,11 @@ class HiveStorage implements LocalStorage {
   @override
   Future<T?> read<T>(String key, {String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       final value = box.get(key);
       return value as T?;
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to read from Hive: $key',
         error: e,
         stackTrace: stack,
@@ -174,11 +163,11 @@ class HiveStorage implements LocalStorage {
   @override
   Future<void> delete(String key, {String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       await box.delete(key);
-      logger.i('[Hive] Deleted from Hive: $key');
+      _logger.i('[Hive] Deleted from Hive: $key');
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to delete from Hive: $key',
         error: e,
         stackTrace: stack,
@@ -191,9 +180,9 @@ class HiveStorage implements LocalStorage {
   Future<void> clear({String? boxName}) async {
     try {
       if (boxName != null) {
-        final box = _getBox(boxName);
+        final box = _getBox(_resolveBoxName(boxName));
         await box.clear();
-        logger.i('[Hive] Cleared Hive box: $boxName');
+        _logger.i('[Hive] Cleared Hive box: $boxName');
       } else {
         // Clear all open boxes
         for (final entry in _openBoxes.entries) {
@@ -201,10 +190,10 @@ class HiveStorage implements LocalStorage {
             await entry.value.clear();
           }
         }
-        logger.i('[Hive] Cleared all Hive boxes');
+        _logger.i('[Hive] Cleared all Hive boxes');
       }
     } catch (e, stack) {
-      logger.e('[Hive] Failed to clear Hive', error: e, stackTrace: stack);
+      _logger.e('[Hive] Failed to clear Hive', error: e, stackTrace: stack);
       rethrow;
     }
   }
@@ -212,7 +201,7 @@ class HiveStorage implements LocalStorage {
   @override
   Future<bool> contains(String key, {String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       return box.containsKey(key);
     } catch (e) {
       return false;
@@ -222,10 +211,10 @@ class HiveStorage implements LocalStorage {
   @override
   Future<Map<String, dynamic>> getAll({String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       return box.toMap().cast<String, dynamic>();
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to get all from Hive',
         error: e,
         stackTrace: stack,
@@ -241,11 +230,11 @@ class HiveStorage implements LocalStorage {
   /// Write multiple values at once
   Future<void> writeAll(Map<String, dynamic> entries, {String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       await box.putAll(entries);
-      logger.i('[Hive] Wrote ${entries.length} entries to Hive: $boxName');
+      _logger.i('[Hive] Wrote ${entries.length} entries to Hive: $boxName');
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to write all to Hive: $boxName',
         error: e,
         stackTrace: stack,
@@ -257,11 +246,11 @@ class HiveStorage implements LocalStorage {
   /// Delete multiple keys at once
   Future<void> deleteAll(List<String> keys, {String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       await box.deleteAll(keys);
-      logger.i('[Hive] Deleted ${keys.length} entries from Hive: $boxName');
+      _logger.i('[Hive] Deleted ${keys.length} entries from Hive: $boxName');
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to delete all from Hive: $boxName',
         error: e,
         stackTrace: stack,
@@ -277,23 +266,23 @@ class HiveStorage implements LocalStorage {
   /// Clear only cache boxes (not user data)
   Future<void> clearCache() async {
     try {
-      await clear(boxName: 'cache');
-      await clear(boxName: 'api_cache');
-      await clear(boxName: 'products');
-      logger.i('[Hive] Cleared all cache boxes');
+      await clear(boxName: StorageConstants.cacheBox);
+      await clear(boxName: StorageConstants.apiCacheBox);
+      await clear(boxName: StorageConstants.productsBox);
+      _logger.i('[Hive] Cleared all cache boxes');
     } catch (e, stack) {
-      logger.e('[Hive] Failed to clear cache', error: e, stackTrace: stack);
+      _logger.e('[Hive] Failed to clear cache', error: e, stackTrace: stack);
     }
   }
 
   /// Clear user data (logout scenario)
   Future<void> clearUserData() async {
     try {
-      await clear(boxName: 'user');
-      await clear(boxName: 'settings');
-      logger.i('[Hive] Cleared user data');
+      await clear(boxName: StorageConstants.userBox);
+      await clear(boxName: StorageConstants.settingsBox);
+      _logger.i('[Hive] Cleared user data');
     } catch (e, stack) {
-      logger.e('[Hive] Failed to clear user data', error: e, stackTrace: stack);
+      _logger.e('[Hive] Failed to clear user data', error: e, stackTrace: stack);
     }
   }
 
@@ -301,9 +290,9 @@ class HiveStorage implements LocalStorage {
   Future<void> clearAll() async {
     try {
       await clear();
-      logger.i('[Hive] Cleared all data');
+      _logger.i('[Hive] Cleared all data');
     } catch (e, stack) {
-      logger.e('[Hive] Failed to clear all data', error: e, stackTrace: stack);
+      _logger.e('[Hive] Failed to clear all data', error: e, stackTrace: stack);
     }
   }
 
@@ -312,50 +301,52 @@ class HiveStorage implements LocalStorage {
   //============================================================================
 
   /// Watch a box for changes
-  Stream<BoxEvent> watchBox({String boxName = 'settings'}) {
-    final box = _getBox(boxName);
+  Stream<BoxEvent> watchBox({String boxName = StorageConstants.settingsBox}) {
+    final box = _getBox(_resolveBoxName(boxName));
     return box.watch();
   }
 
   /// Get all keys in a box
-  List<String> getKeys({String boxName = 'settings'}) {
-    final box = _getBox(boxName);
+  List<String> getKeys({String boxName = StorageConstants.settingsBox}) {
+    final box = _getBox(_resolveBoxName(boxName));
     return box.keys.cast<String>().toList();
   }
 
   /// Get box length
-  int getLength({String boxName = 'settings'}) {
-    final box = _getBox(boxName);
+  int getLength({String boxName = StorageConstants.settingsBox}) {
+    final box = _getBox(_resolveBoxName(boxName));
     return box.length;
   }
 
   /// Check if box is empty
-  bool isEmpty({String boxName = 'settings'}) {
-    final box = _getBox(boxName);
+  bool isEmpty({String boxName = StorageConstants.settingsBox}) {
+    final box = _getBox(_resolveBoxName(boxName));
     return box.isEmpty;
   }
 
   /// Check if box is not empty
-  bool isNotEmpty({String boxName = 'settings'}) {
-    final box = _getBox(boxName);
+  bool isNotEmpty({String boxName = StorageConstants.settingsBox}) {
+    final box = _getBox(_resolveBoxName(boxName));
     return box.isNotEmpty;
   }
 
   /// Compact a box
   Future<void> compact({String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       await box.compact();
-      logger.i('[Hive] Compacted Hive box: ${boxName ?? 'settings'}');
+      _logger.i(
+        '[Hive] Compacted Hive box: ${boxName ?? StorageConstants.settingsBox}',
+      );
     } catch (e, stack) {
-      logger.e('[Hive] Failed to compact Hive', error: e, stackTrace: stack);
+      _logger.e('[Hive] Failed to compact Hive', error: e, stackTrace: stack);
     }
   }
 
   /// Get box size on disk (for debugging)
   Future<int> getBoxSize({String? boxName}) async {
     try {
-      final box = _getBox(boxName ?? 'settings');
+      final box = _getBox(_resolveBoxName(boxName));
       // This is an estimate - actual implementation may vary
       return box.length;
     } catch (e) {
@@ -415,11 +406,11 @@ class HiveStorage implements LocalStorage {
         if (box != null && box.isOpen) {
           await box.close();
           _openBoxes.remove(boxName);
-          logger.i('[Hive] Closed Hive box: $boxName');
+          _logger.i('[Hive] Closed Hive box: $boxName');
         }
       }
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to close Hive box: $boxName',
         error: e,
         stackTrace: stack,
@@ -438,9 +429,9 @@ class HiveStorage implements LocalStorage {
       }
       _openBoxes.clear();
       _isInitialized = false;
-      logger.i('[Hive] Closed all Hive boxes');
+      _logger.i('[Hive] Closed all Hive boxes');
     } catch (e, stack) {
-      logger.e('[Hive] Failed to close Hive', error: e, stackTrace: stack);
+      _logger.e('[Hive] Failed to close Hive', error: e, stackTrace: stack);
     }
   }
 
@@ -451,9 +442,9 @@ class HiveStorage implements LocalStorage {
         await closeBox(boxName: boxName);
       }
       await Hive.deleteBoxFromDisk(boxName);
-      logger.i('[Hive] Deleted Hive box from disk: $boxName');
+      _logger.i('[Hive] Deleted Hive box from disk: $boxName');
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to delete Hive box: $boxName',
         error: e,
         stackTrace: stack,
@@ -467,9 +458,9 @@ class HiveStorage implements LocalStorage {
   //============================================================================
   /// Export box data (for debugging)
   /// Export box data (for debugging)
-  Map<String, dynamic> exportBox({String boxName = 'settings'}) {
+  Map<String, dynamic> exportBox({String? boxName}) {
     try {
-      final box = _getBox(boxName);
+      final box = _getBox(_resolveBoxName(boxName));
       final Map<String, dynamic> export = {};
 
       for (final key in box.keys) {
@@ -479,7 +470,7 @@ class HiveStorage implements LocalStorage {
 
       return export;
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to export Hive box: $boxName',
         error: e,
         stackTrace: stack,
@@ -500,12 +491,12 @@ class HiveStorage implements LocalStorage {
   /// Import data into a box (for testing)
   Future<void> importBox(String boxName, Map<String, dynamic> data) async {
     try {
-      final box = _getBox(boxName);
+      final box = _getBox(_resolveBoxName(boxName));
       await box.clear();
       await box.putAll(data);
-      logger.i('[Hive] Imported ${data.length} entries into box: $boxName');
+      _logger.i('[Hive] Imported ${data.length} entries into box: $boxName');
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Hive] Failed to import into box: $boxName',
         error: e,
         stackTrace: stack,
@@ -519,25 +510,28 @@ class HiveStorage implements LocalStorage {
   //============================================================================
 
   /// Get settings box
-  Box get settingsBox => _getBox('settings');
+  Box get settingsBox => _getBox(StorageConstants.settingsBox);
 
   /// Get user box
-  Box get userBox => _getBox('user');
+  Box get userBox => _getBox(StorageConstants.userBox);
 
   /// Get cache box
-  Box get cacheBox => _getBox('cache');
+  Box get cacheBox => _getBox(StorageConstants.cacheBox);
 
   /// Get products box
-  Box get productsBox => _getBox('products');
+  Box get productsBox => _getBox(StorageConstants.productsBox);
 
   /// Get orders box
-  Box get ordersBox => _getBox('orders');
+  Box get ordersBox => _getBox(StorageConstants.ordersBox);
 
   /// Get notifications box
-  Box get notificationsBox => _getBox('notifications');
+  Box get notificationsBox => _getBox(StorageConstants.notificationsBox);
 
   /// Get API cache box
-  Box get apiCacheBox => _getBox('api_cache');
+  Box get apiCacheBox => _getBox(StorageConstants.apiCacheBox);
+
+  String _resolveBoxName(String? boxName) =>
+      boxName ?? StorageConstants.settingsBox;
 }
 
 

@@ -4,22 +4,25 @@ import 'dart:ui' as flutter;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
+import 'package:injectable/injectable.dart';
 
 part 'app_lifecycle_event.dart';
 part 'app_lifecycle_state.dart';
 part 'app_lifecycle_bloc.freezed.dart';
 
+@singleton
 class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
-  
+  final LoggerService _logger;
+
   Timer? _foregroundTimer;
   Timer? _backgroundTimer;
   DateTime? _currentSessionStart;
   bool _isInBackground = false;
 
-  AppLifecycleBloc() : super(AppLifecycleState.initial()) {
+  AppLifecycleBloc(this._logger) : super(AppLifecycleState.initial()) {
     on<_EventChanged>(_onEventChanged);
     on<_EventResumed>(_onEventResumed);
     on<_EventPaused>(_onEventPaused);
@@ -43,7 +46,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
     
     if (newState == null) return;
 
-    logger.d('AppLifecycle changed to: ${newState.toString()}');
+    _logger.d('AppLifecycle changed to: ${newState.toString()}');
 
     switch (newState) {
       case flutter.AppLifecycleState.resumed:
@@ -79,7 +82,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
 
     emit(AppLifecycleState.resumed(lastResumedAt: now),);
     _startForegroundTracking();
-    logger.i('App resumed at $now');
+    _logger.i('App resumed at $now');
   }
 
   Future<void> _onEventPaused(
@@ -89,7 +92,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
     final now = DateTime.now();
     emit(AppLifecycleState.paused(lastPausedAt: now),);
     _stopForegroundTracking();
-    logger.i('App paused at $now');
+    _logger.i('App paused at $now');
   }
 
   Future<void> _onEventInactive(
@@ -97,7 +100,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
     Emitter<AppLifecycleState> emit,
   ) async {
     emit(AppLifecycleState.inactive(),);
-    logger.d('App became inactive');
+    _logger.d('App became inactive');
   }
 
   Future<void> _onEventDetached(
@@ -105,7 +108,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
     Emitter<AppLifecycleState> emit,
   ) async {
     emit(const AppLifecycleState.detached(),);
-    logger.d('App detached');
+    _logger.d('App detached');
     
     if (_currentSessionStart != null) {
       final sessionDuration = DateTime.now().difference(_currentSessionStart!);
@@ -121,7 +124,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
       _isInBackground = true;
       emit(AppLifecycleState.background(),);
       _startBackgroundTracking();
-      logger.i('App entered background');
+      _logger.i('App entered background');
     }
   }
 
@@ -132,7 +135,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
     if (_isInBackground) {
       _isInBackground = false;
       _stopBackgroundTracking();
-      logger.i('App entered foreground');
+      _logger.i('App entered foreground');
     }
   }
 
@@ -147,7 +150,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
       sessionCount: newSessionCount,
     ));
     
-    logger.i('Session started - Session #$newSessionCount');
+    _logger.i('Session started - Session #$newSessionCount');
   }
 
   Future<void> _onEventSessionEnded(
@@ -155,7 +158,7 @@ class AppLifecycleBloc extends Bloc<AppLifecycleEvent, AppLifecycleState> {
     Emitter<AppLifecycleState> emit,
   ) async {
     if (_currentSessionStart != null) {
-      logger.i('Session ended - Duration: ${event.sessionDuration}');
+      _logger.i('Session ended - Duration: ${event.sessionDuration}');
       _currentSessionStart = null;
     }
   }

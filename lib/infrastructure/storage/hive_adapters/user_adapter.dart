@@ -46,33 +46,33 @@ class UserAdapter extends TypeAdapter<UserModel> {
   }
 
   @override
-  void write(BinaryWriter writer, UserModel obj) {
+  void write(BinaryWriter writer, UserModel userModel) {
     writer
-      ..writeString(obj.id)
-      ..writeString(obj.email)
-      ..writeString(obj.firstName )
-      ..writeString(obj.lastName  )
-      ..writeString(obj.avatarUrl ?? '')
-      ..writeString(obj.phoneNumber ?? '')
-      ..writeBool(obj.emailVerified)
-      ..writeList(obj.roles)
-      ..writeBool(obj.createdAt != null);
+      ..writeString(userModel.id)
+      ..writeString(userModel.email)
+      ..writeString(userModel.firstName ?? '')
+      ..writeString(userModel.lastName ?? '')
+      ..writeString(userModel.avatarUrl ?? '')
+      ..writeString(userModel.phoneNumber ?? '')
+      ..writeBool(userModel.emailVerified ?? false)
+      ..writeList(userModel.roles ?? [])
+      ..writeBool(userModel.createdAt != null);
 
-      if (obj.createdAt != null) {
-        writer.writeInt(obj.createdAt!.millisecondsSinceEpoch);
+      if (userModel.createdAt != null) {
+        writer.writeInt(userModel.createdAt!.millisecondsSinceEpoch);
       }
 
-      writer.writeBool(obj.updatedAt != null);
-      if (obj.updatedAt != null) {
-        writer.writeInt(obj.updatedAt!.millisecondsSinceEpoch);
+      writer.writeBool(userModel.updatedAt != null);
+      if (userModel.updatedAt != null) {
+        writer.writeInt(userModel.updatedAt!.millisecondsSinceEpoch);
       }
 
-      writer.writeBool(obj.loggedInAt != null);
-      if (obj.loggedInAt != null) {
-        writer.writeInt(obj.loggedInAt!.millisecondsSinceEpoch);
+      writer.writeBool(userModel.loggedInAt != null);
+      if (userModel.loggedInAt != null) {
+        writer.writeInt(userModel.loggedInAt!.millisecondsSinceEpoch);
       }
 
-      writer.writeBool(obj.isProfileCompleted);
+      writer.writeBool(userModel.isProfileCompleted ?? false);
   }
 
   @override

@@ -74,6 +74,8 @@ abstract class ProductRemoteDataSource {
   Future<ApiResponse<List<ProductModel>>> getRecentlyViewed({
     int limit = 10,
   });
+  Future<ApiResponse<void>> addToRecentlyViewed({required String productId});
+  Future<ApiResponse<void>> removeFromRecentlyViewed({required String productId});
 
   // // Get trending products
   // Future<ApiResponse<List<ProductModel>>> getTrendingProducts();

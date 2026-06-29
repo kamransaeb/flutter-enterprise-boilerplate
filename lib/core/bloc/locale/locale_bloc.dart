@@ -4,21 +4,25 @@ import 'package:flutter_enterprise_boilerplate/core/constants/app_constants.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_enterprise_boilerplate/core/constants/storage_constants.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 part 'locale_event.dart';
 part 'locale_state.dart';
 part 'locale_bloc.freezed.dart';
 
+@singleton
 class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
+  final LoggerService _logger;
   final LocalStorage _localStorage;
 
-  LocaleBloc({@Named('shared_prefs') required LocalStorage localStorage})
-    : // initializer list
-      _localStorage = localStorage,
-      super(const LocaleState.initial()) {
+  LocaleBloc({
+    @Named('shared_prefs') required LocalStorage localStorage,
+    required LoggerService logger,
+  })  : _localStorage = localStorage,
+        _logger = logger,
+        super(const LocaleState.initial()) {
     on<_EventLoaded>(_onEventLoaded);
     on<_EventChanged>(_onEventChanged);
     on<_EventChangedByCode>(_onEventChangedByCode);
@@ -31,15 +35,15 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
     _EventLoaded event,
     Emitter<LocaleState> emit,
   ) async {
-    logger.i('LocaleBloc: Loading saved locale preferences');
+    _logger.i('LocaleBloc: Loading saved locale preferences');
     emit(LocaleState.loading(previousLocale: state.locale));
     try {
       final locale = await _getSavedLocale() ?? await _getSystemLocale();
-      logger.i('LocaleBloc: Locale loaded - $locale');
+      _logger.i('LocaleBloc: Locale loaded - $locale');
       emit(LocaleState.loaded(locale: locale));
       await _saveLocale(locale);
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'LocaleBloc: Error loading locale',
         error: error,
         stackTrace: stackTrace,
@@ -57,16 +61,16 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
     _EventChanged event,
     Emitter<LocaleState> emit,
   ) async {
-    logger.i('LocaleBloc: Changing locale to ${event.locale}');
+    _logger.i('LocaleBloc: Changing locale to ${event.locale}');
     emit(LocaleState.loading(previousLocale: state.locale));
     try {
       await _saveLocale(event.locale);
-      logger.i('LocaleBloc: Locale changed successfully');
+      _logger.i('LocaleBloc: Locale changed successfully');
       // Update the app locale
       //await _updateAppLocale(event.locale);
       emit(LocaleState.loaded(locale: event.locale));
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'LocaleBloc: Error changing locale',
         error: error,
         stackTrace: stackTrace,
@@ -84,17 +88,17 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
     _EventChangedByCode event,
     Emitter<LocaleState> emit,
   ) async {
-    logger.i('LocaleBloc: Changing locale by code to ${event.languageCode}');
+    _logger.i('LocaleBloc: Changing locale by code to ${event.languageCode}');
     final locale = event.countryCode != null
         ? Locale(event.languageCode, event.countryCode!)
         : Locale(event.languageCode);
     emit(LocaleState.loading(previousLocale: state.locale));
     try {
       await _saveLocale(locale);
-      logger.i('LocaleBloc: Locale changed successfully');
+      _logger.i('LocaleBloc: Locale changed successfully');
       emit(LocaleState.loaded(locale: locale));
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'LocaleBloc: Error changing locale by code',
         error: error,
         stackTrace: stackTrace,
@@ -112,15 +116,15 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
     _EventResetToSystem event,
     Emitter<LocaleState> emit,
   ) async {
-    logger.i('LocaleBloc: Resetting locale to system');
+    _logger.i('LocaleBloc: Resetting locale to system');
     emit(LocaleState.loading(previousLocale: state.locale));
     try {
       final systemLocale = await _getSystemLocale();
       await _saveLocale(systemLocale);
-      logger.i('LocaleBloc: Locale reset to system successfully');
+      _logger.i('LocaleBloc: Locale reset to system successfully');
       emit(LocaleState.loaded(locale: systemLocale));
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'LocaleBloc: Error resetting locale to system',
         error: error,
         stackTrace: stackTrace,
@@ -138,15 +142,15 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
     _EventFallbackToDefault event,
     Emitter<LocaleState> emit,
   ) async {
-    logger.i('LocaleBloc: Falling back to default locale');
+    _logger.i('LocaleBloc: Falling back to default locale');
     emit(LocaleState.loading(previousLocale: state.locale));
     try {
       final defaultLocale = AppConstants.defaultLocale;
       await _saveLocale(defaultLocale);
-      logger.i('LocaleBloc: Locale fallback to default successfully');
+      _logger.i('LocaleBloc: Locale fallback to default successfully');
       emit(LocaleState.loaded(locale: defaultLocale));
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'LocaleBloc: Error falling back to default locale',
         error: error,
         stackTrace: stackTrace,
@@ -173,7 +177,7 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
           ? Locale(languageCode, countryCode)
           : Locale(languageCode);
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'LocaleBloc: Error getting saved locale',
         error: error,
         stackTrace: stackTrace,
@@ -202,7 +206,7 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
       // If not, return the default locale
       return AppConstants.defaultLocale;
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'LocaleBloc: Error getting system locale',
         error: error,
         stackTrace: stackTrace,

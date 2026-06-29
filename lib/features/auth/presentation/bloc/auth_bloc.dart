@@ -11,9 +11,9 @@ import 'package:flutter_enterprise_boilerplate/features/auth/domain/usecases/log
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/usecases/register_usecase.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/value_objects/login_params.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/value_objects/register_params.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -25,8 +25,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUseCase _logoutUseCase;
   final RegisterUseCase _registerUseCase;
   final AuthRepository _authRepository;
-  //final AnalyticsService? _analyticsService;
-  //final AppLogger _logger;
+  final LoggerService _logger;
 
   Timer? _tokenRefreshTimer;
   static const _tokenRefreshInterval = Duration(minutes: 45);
@@ -36,13 +35,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required LogoutUseCase logoutUseCase,
     required RegisterUseCase registerUseCase,
     required AuthRepository authRepository,
+    required LoggerService logger,
     //  AnalyticsService? analyticsService,
   }) : _loginUseCase = loginUseCase,
+       _logger = logger,
        _logoutUseCase = logoutUseCase,
        _registerUseCase = registerUseCase,
        _authRepository = authRepository,
        //   _analyticsService = analyticsService,
-       //   _logger = GetIt.instance<AppLogger>(),
+       //   _logger = GetIt.instance<LoggerService>(),
        super(AuthState.initial()) {
     on<_EventAppStarted>(_onEventAppStarted);
     on<_EventLoginRequested>(_onEventLoginRequested);
@@ -70,7 +71,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventAppStarted event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: App started - checking authentication status');
+    _logger.i('AuthBloc: App started - checking authentication status');
     emit(AuthState.checkingAuth());
 
     try {
@@ -88,7 +89,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final result = await _authRepository.getCurrentUser();
         result.fold(
           (failure) async {
-            logger.e(
+            _logger.e(
               'AuthBloc: Error getting current user - ${failure.message}',
             );
             emit(AuthState.failure(failure: failure));
@@ -97,19 +98,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             if (user != null) {
               emit(AuthState.authenticated(user: user));
               _startTokenRefreshTimer();
-              logger.i('AuthBloc: User authenticated - ${user.email}');
+              _logger.i('AuthBloc: User authenticated - ${user.email}');
             } else {
               emit(AuthState.unauthenticated());
-              logger.w('AuthBloc: User not found but authenticated flag true');
+              _logger.w('AuthBloc: User not found but authenticated flag true');
             }
           },
         );
       } else {
         emit(AuthState.unauthenticated());
-        logger.i('AuthBloc: User not authenticated');
+        _logger.i('AuthBloc: User not authenticated');
       }
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Error checking auth status',
         error: error,
         stackTrace: stackTrace,
@@ -122,7 +123,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventLoginRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: Login requested for ${event.email}');
+    _logger.i('AuthBloc: Login requested for ${event.email}');
     emit(AuthState.loading());
 
     try {
@@ -132,17 +133,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       await result.fold(
         (failure) async {
-          logger.e('AuthBloc: Login failed - ${failure.message}');
+          _logger.e('AuthBloc: Login failed - ${failure.message}');
           emit(AuthState.failure(failure: failure));
         },
         (user) async {
           emit(AuthState.authenticated(user: user));
           _startTokenRefreshTimer();
-          logger.i('AuthBloc: Login successful - ${user.email}');
+          _logger.i('AuthBloc: Login successful - ${user.email}');
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Unexpected error during login',
         error: error,
         stackTrace: stackTrace,
@@ -155,7 +156,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventRegisterRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: Registration requested for ${event.email}');
+    _logger.i('AuthBloc: Registration requested for ${event.email}');
     emit(AuthState.loading());
 
     try {
@@ -170,16 +171,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       await result.fold(
         (failure) async {
-          logger.e('AuthBloc: Registration failed - ${failure.message}');
+          _logger.e('AuthBloc: Registration failed - ${failure.message}');
           emit(AuthState.failure(failure: failure));
         },
         (user) async {
           emit(AuthState.authenticated(user: user));
-          logger.i('AuthBloc: Registration successful - ${user.email}');
+          _logger.i('AuthBloc: Registration successful - ${user.email}');
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Unexpected error during registration',
         error: error,
         stackTrace: stackTrace,
@@ -192,7 +193,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: Logout requested');
+    _logger.i('AuthBloc: Logout requested');
     emit(AuthState.loading());
 
     try {
@@ -200,17 +201,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       await result.fold(
         (failure) async {
-          logger.e('AuthBloc: Logout failed - ${failure.message}');
+          _logger.e('AuthBloc: Logout failed - ${failure.message}');
           emit(AuthState.failure(failure: failure));
         },
         (_) async {
           _cancelTokenRefreshTimer();
           emit(AuthState.unauthenticated());
-          logger.i('AuthBloc: Logout successful');
+          _logger.i('AuthBloc: Logout successful');
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Unexpected error during logout',
         error: error,
         stackTrace: stackTrace,
@@ -223,34 +224,34 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventCheckStatusRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.d('AuthBloc: Manual status check requested');
+    _logger.d('AuthBloc: Manual status check requested');
 
     final isAuthenticated = await _authRepository.isAuthenticated();
 
     if (isAuthenticated && state.user != null) {
       emit(AuthState.authenticated(user: state.user!));
-      logger.d('AuthBloc: User is authenticated');
+      _logger.d('AuthBloc: User is authenticated');
     } else if (isAuthenticated) {
       final result = await _authRepository.getCurrentUser();
 
       result.fold(
         (failure) async {
-          logger.e('AuthBloc: Error getting current user - ${failure.message}');
+          _logger.e('AuthBloc: Error getting current user - ${failure.message}');
           emit(AuthState.failure(failure: failure));
         },
         (user) async {
           if (user != null) {
             emit(AuthState.authenticated(user: user));
-            logger.d('AuthBloc: User loaded from repository');
+            _logger.d('AuthBloc: User loaded from repository');
           } else {
             emit(AuthState.unauthenticated());
-            logger.w('AuthBloc: Auth flag true but no user found');
+            _logger.w('AuthBloc: Auth flag true but no user found');
           }
         },
       );
     } else {
       emit(AuthState.unauthenticated());
-      logger.d('AuthBloc: User is not authenticated');
+      _logger.d('AuthBloc: User is not authenticated');
     }
   }
 
@@ -258,7 +259,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventRefreshTokenRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.d('AuthBloc: Token refresh requested');
+    _logger.d('AuthBloc: Token refresh requested');
 
     try {
       final refreshTokenResult = await _authRepository.refreshToken();
@@ -266,7 +267,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       
       refreshTokenResult.fold(
         (failure) async {
-          logger.e('AuthBloc: Token refresh failed - ${failure.message}');
+          _logger.e('AuthBloc: Token refresh failed - ${failure.message}');
           emit(AuthState.failure(failure: failure));
         },
         (refreshToken) async {
@@ -274,7 +275,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             final refreshedUser = await _authRepository.getCurrentUser();
             refreshedUser.fold(
               (failure) async {
-                logger.e(
+                _logger.e(
                   'AuthBloc: Error getting current user - ${failure.message}',
                 );
                 emit(AuthState.failure(failure: failure));
@@ -282,21 +283,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
               (user) async {
                 if (user != null) {
                   emit(AuthState.authenticated(user: user));
-                  logger.d('AuthBloc: User loaded from repository');
+                  _logger.d('AuthBloc: User loaded from repository');
                 } else {
-                  logger.e('AuthBloc: Refresh Token found but no user found');
+                  _logger.e('AuthBloc: Refresh Token found but no user found');
                   add(AuthEvent.logoutRequested());
                 }
               },
             );
           } else {
-            logger.e('AuthBloc: Auth flag true but no user found');
+            _logger.e('AuthBloc: Auth flag true but no user found');
             add(AuthEvent.logoutRequested());
           }
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Error refreshing token',
         error: error,
         stackTrace: stackTrace,
@@ -309,11 +310,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _EventUpdateUserRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.d('AuthBloc: User update requested');
+    _logger.d('AuthBloc: User update requested');
 
     if (state.isAuthenticated) {
       emit(AuthState.authenticated(user: event.user));
-      logger.d('AuthBloc: User updated in state - ${event.user.email}');
+      _logger.d('AuthBloc: User updated in state - ${event.user.email}');
     }
   }
 
@@ -321,7 +322,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   AuthGoogleLoginRequested event,
   //   Emitter<AuthState> emit,
   // ) async {
-  //   logger.i('AuthBloc: Google login requested');
+  //   _logger.i('AuthBloc: Google login requested');
   //   emit(AuthState.loading());
 
   //   try {
@@ -329,16 +330,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   //     await result.fold(
   //       (failure) async {
-  //         logger.e('AuthBloc: Google login failed - ${failure.message}');
+  //         _logger.e('AuthBloc: Google login failed - ${failure.message}');
   //         emit(AuthState.error(failure.message ?? 'Google login failed'));
   //       },
   //       (user) async {
   //         emit(AuthState.authenticated(user));
-  //         logger.i('AuthBloc: Google login successful - ${user.email}');
+  //         _logger.i('AuthBloc: Google login successful - ${user.email}');
   //       },
   //     );
   //   } catch (error, stackTrace) {
-  //     logger.e(
+  //     _logger.e(
   //       'AuthBloc: Unexpected error during Google login',
   //       error: error,
   //       stackTrace: stackTrace,
@@ -358,16 +359,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   //     await result.fold(
   //       (failure) async {
-  //         logger.e('AuthBloc: Apple login failed - ${failure.message}');
+  //         _logger.e('AuthBloc: Apple login failed - ${failure.message}');
   //         emit(AuthState.error(failure.message ?? 'Apple login failed'));
   //       },
   //       (user) async {
   //         emit(AuthState.authenticated(user));
-  //         logger.i('AuthBloc: Apple login successful - ${user.email}');
+  //         _logger.i('AuthBloc: Apple login successful - ${user.email}');
   //       },
   //     );
   //   } catch (error, stackTrace) {
-  //     logger.e(
+  //     _logger.e(
   //       'AuthBloc: Unexpected error during Apple login',
   //       error: error,
   //       stackTrace: stackTrace,
@@ -380,7 +381,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   AuthFacebookLoginRequested event,
   //   Emitter<AuthState> emit,
   // ) async {
-  //   logger.i('AuthBloc: Facebook login requested');
+  //   _logger.i('AuthBloc: Facebook login requested');
   //   emit(AuthState.loading());
 
   //   try {
@@ -388,16 +389,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   //     await result.fold(
   //       (failure) async {
-  //         logger.e('AuthBloc: Facebook login failed - ${failure.message}');
+  //         _logger.e('AuthBloc: Facebook login failed - ${failure.message}');
   //         emit(AuthState.error(failure.message ?? 'Facebook login failed'));
   //       },
   //       (user) async {
   //         emit(AuthState.authenticated(user));
-  //         logger.i('AuthBloc: Facebook login successful - ${user.email}');
+  //         _logger.i('AuthBloc: Facebook login successful - ${user.email}');
   //       },
   //     );
   //   } catch (error, stackTrace) {
-  //     logger.e(
+  //     _logger.e(
   //       'AuthBloc: Unexpected error during Facebook login',
   //       error: error,
   //       stackTrace: stackTrace,
@@ -410,22 +411,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventForgotPasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: Forgot password requested for ${event.email}');
+    _logger.i('AuthBloc: Forgot password requested for ${event.email}');
 
     try {
       final result = await _authRepository.forgotPassword(event.email);
 
       await result.fold(
         (failure) async {
-          logger.e('AuthBloc: Forgot password failed - ${failure.message}');
+          _logger.e('AuthBloc: Forgot password failed - ${failure.message}');
           // Don't emit error state to UI to avoid leaking email existence
         },
         (_) async {
-          logger.i('AuthBloc: Password reset email sent');
+          _logger.i('AuthBloc: Password reset email sent');
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Unexpected error during password reset',
         error: error,
         stackTrace: stackTrace,
@@ -438,7 +439,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventResetPasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: Reset password requested');
+    _logger.i('AuthBloc: Reset password requested');
 
     try {
       final result = await _authRepository.resetPassword(
@@ -447,16 +448,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       await result.fold(
         (failure) async {
-          logger.e('AuthBloc: Reset password failed - ${failure.message}');
+          _logger.e('AuthBloc: Reset password failed - ${failure.message}');
           emit(AuthState.failure(failure: failure));
         },
         (_) async {
-          logger.i('AuthBloc: Password reset successful');
+          _logger.i('AuthBloc: Password reset successful');
           emit(AuthState.unauthenticated());
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Unexpected error during password reset',
         error: error,
         stackTrace: stackTrace,
@@ -474,21 +475,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventVerifyEmailRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: Verify email requested');
+    _logger.i('AuthBloc: Verify email requested');
 
     try {
       final result = await _authRepository.verifyEmail(event.email, event.token);
 
       await result.fold(
         (failure) async {
-          logger.e('AuthBloc: Send verification failed - ${failure.message}');
+          _logger.e('AuthBloc: Send verification failed - ${failure.message}');
         },
         (_) async {
-          logger.i('AuthBloc: Verification email sent');
+          _logger.i('AuthBloc: Verification email sent');
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Unexpected error sending verification',
         error: error,
         stackTrace: stackTrace,
@@ -507,21 +508,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _EventResendVerificationEmailRequested event,
     Emitter<AuthState> emit,
   ) async {
-    logger.i('AuthBloc: Resend verification requested for ${event.email}');
+    _logger.i('AuthBloc: Resend verification requested for ${event.email}');
 
     try {
       final result = await _authRepository.resendVerificationEmail(event.email);
 
       await result.fold(
         (failure) async {
-          logger.e('AuthBloc: Resend verification failed - ${failure.message}');
+          _logger.e('AuthBloc: Resend verification failed - ${failure.message}');
         },
         (_) async {
-          logger.i('AuthBloc: Verification email resent');
+          _logger.i('AuthBloc: Verification email resent');
         },
       );
     } catch (error, stackTrace) {
-      logger.e(
+      _logger.e(
         'AuthBloc: Unexpected error resending verification',
         error: error,
         stackTrace: stackTrace,
@@ -533,7 +534,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   AuthOnboardingCompleted event,
   //   Emitter<AuthState> emit,
   // ) async {
-  //   logger.i('AuthBloc: Onboarding completed');
+  //   _logger.i('AuthBloc: Onboarding completed');
   //   await _markOnboardingCompleted();
   //   emit(AuthState.unauthenticated());
   // }
@@ -542,7 +543,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   AuthFirstLaunchDetected event,
   //   Emitter<AuthState> emit,
   // ) async {
-  //   logger.i('AuthBloc: First launch detected');
+  //   _logger.i('AuthBloc: First launch detected');
   //   emit(AuthState.firstLaunch());
   // }
 
@@ -552,7 +553,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   try {
   //     return await _authRepository.isFirstLaunch();
   //   } catch (error) {
-  //     logger.e('Error checking first launch', error: error);
+  //     _logger.e('Error checking first launch', error: error);
   //     return false;
   //   }
   // }
@@ -561,7 +562,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   try {
   //     return await _authRepository.hasSeenOnboarding();
   //   } catch (error) {
-  //     logger.e('Error checking onboarding status', error: error);
+  //     _logger.e('Error checking onboarding status', error: error);
   //     return false;
   //   }
   // }
@@ -570,7 +571,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   try {
   //     await _authRepository.markOnboardingCompleted();
   //   } catch (error) {
-  //     logger.e('Error marking onboarding completed', error: error);
+  //     _logger.e('Error marking onboarding completed', error: error);
   //   }
   // }
 

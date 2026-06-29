@@ -6,7 +6,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/environment_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/notification_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
@@ -14,11 +13,13 @@ import 'package:injectable/injectable.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../app/app_config.dart';
+import '../../../core/services/logger_service.dart';
 
 @singleton
 class FirebaseService {
   final AppConfig _appConfig;
   final EnvironmentService _env;
+  final LoggerService _logger;
 
   FirebaseAnalytics? _analytics;
   late FirebaseCrashlytics _crashlytics;
@@ -27,7 +28,7 @@ class FirebaseService {
 
   bool _isInitialized = false;
 
-  FirebaseService(this._appConfig, this._env);
+  FirebaseService(this._appConfig, this._env, this._logger);
 
   /// Getters for Firebase instances
   FirebaseAnalytics? get analytics => _analytics;
@@ -42,7 +43,7 @@ class FirebaseService {
     if (_isInitialized) return;
 
     try {
-      logger.i('Initializing Firebase services...');
+      _logger.i('Initializing Firebase services...');
       // Initialize Firebase core
       await Firebase.initializeApp(options: _appConfig.firebaseOptions);
 
@@ -53,11 +54,11 @@ class FirebaseService {
       await _configureMessaging();
 
       _isInitialized = true;
-      logger.i(
+      _logger.i(
         'Firebase services initialized for ${_appConfig.flavor}',
       );
     } catch (e, stack) {
-      logger.e('Failed to initialize Firebase', error: e, stackTrace: stack);
+      _logger.e('Failed to initialize Firebase', error: e, stackTrace: stack);
       rethrow;
     }
   }
@@ -66,7 +67,7 @@ class FirebaseService {
   Future<void> _configureAnalytics() async {
     if (!_env.shouldUseAnalytics) return;
     try {
-      _analytics = FirebaseAnalytics.instance;
+      final _analytics = FirebaseAnalytics.instance;
       // Register in DI
       GetIt.instance.registerSingleton<FirebaseAnalytics>(_analytics);
 
@@ -90,7 +91,7 @@ class FirebaseService {
       await _analytics.setSessionTimeoutDuration(const Duration(minutes: 30));
 
            // Log first open event
-      await analytics.logEvent(
+      await _analytics.logEvent(
         name: 'app_initialized',
         parameters: {
           'flavor': _env.flavorName,
@@ -99,12 +100,12 @@ class FirebaseService {
         },
       );
 
-      logger.i(
+      _logger.i(
         'Analytics configured for ${_appConfig.flavor}',
         
       );
     } catch (e, stack) {
-      logger.e('Failed to configure Analytics', error: e, stackTrace: stack);
+      _logger.e('Failed to configure Analytics', error: e, stackTrace: stack);
     }
   }
 
@@ -132,7 +133,7 @@ class FirebaseService {
       await _crashlytics.setCustomKey('platform', defaultTargetPlatform.name);
 
       // Record non-fatal errors in development
-      if (_appConfig.isDevelopment) {
+      if (_appConfig.isDev) {
         await _crashlytics.setCrashlyticsCollectionEnabled(false);
       }
       // // Global error handlers so uncaught errors are reported to Crashlytics
@@ -145,11 +146,11 @@ class FirebaseService {
       //     return true;
       //   };
 
-      logger.i(
+      _logger.i(
         'Crashlytics configured for ${_appConfig.flavor}',
       );
     } catch (e, stack) {
-      logger.e('Failed to configure Crashlytics', error: e, stackTrace: stack);
+      _logger.e('Failed to configure Crashlytics', error: e, stackTrace: stack);
     }
   }
 
@@ -200,11 +201,11 @@ class FirebaseService {
       // Fetch and activate (don't await - let it run in background)
       unawaited(_fetchRemoteConfig(_remoteConfig));
 
-      logger.i(
+      _logger.i(
         'Remote Config configured for ${_appConfig.flavor}',
       );
     } catch (e, stack) {
-      logger.e('Failed to configure Remote Config', error: e, stackTrace: stack);
+      _logger.e('Failed to configure Remote Config', error: e, stackTrace: stack);
     }
   }
 
@@ -212,13 +213,13 @@ class FirebaseService {
   Future<void> _fetchRemoteConfig(FirebaseRemoteConfig remoteConfig) async {
     try {
       await remoteConfig.fetchAndActivate();
-      logger.i(
+      _logger.i(
         '  ✓ Remote Config fetched: ${remoteConfig.getAll().length} keys',
       );
 
       // Check maintenance mode
       if (remoteConfig.getBool('maintenance_mode')) {
-        logger.w('  ⚠️ App is in maintenance mode');
+        _logger.w('  ⚠️ App is in maintenance mode');
         // You could show a maintenance banner here
       }
 
@@ -228,14 +229,14 @@ class FirebaseService {
         final minVersion = remoteConfig.getString('minimum_app_version');
 
         if (_compareVersions(currentVersion, minVersion) < 0) {
-          logger.w(
+          _logger.w(
             '  ⚠️ Force update required: $currentVersion < $minVersion',
           );
           // Trigger force update flow
         }
       }
     } catch (e, stack) {
-      logger.e('Failed to fetch Remote Config', error: e, stackTrace: stack);
+      _logger.e('Failed to fetch Remote Config', error: e, stackTrace: stack);
     }
   }
 
@@ -257,7 +258,7 @@ class FirebaseService {
         criticalAlert: false,
       );
 
-      logger.i(
+      _logger.i(
         'Messaging permission: ${settings.authorizationStatus}',
       );
 
@@ -265,7 +266,7 @@ class FirebaseService {
         // Get token
         final token = await _messaging.getToken();
         if (token != null) {
-          logger.i('FCM Token obtained');
+          _logger.i('FCM Token obtained');
 
           // Save token to secure storage
           final secureStorage = GetIt.instance<LocalStorage>(
@@ -288,25 +289,25 @@ class FirebaseService {
         // Get initial message if app launched from notification
         final initialMessage = await messaging.getInitialMessage();
         if (initialMessage != null) {
-            logger.i('  ✓ App launched from notification');
+            _logger.i('  ✓ App launched from notification');
           _handleInitialMessage(initialMessage);
         }
-        logger.i(
+        _logger.i(
           'Messaging configured for ${_appConfig.flavor}',
         );
       } else {
-        logger.i('Messaging permission not granted');
+        _logger.i('Messaging permission not granted');
       }
     } catch (e, stack) {
-      logger.e('Failed to configure Messaging', error: e, stackTrace: stack);
+      _logger.e('Failed to configure Messaging', error: e, stackTrace: stack);
     }
   }
 
   /// Handle foreground message
   void _handleForegroundMessage(RemoteMessage message) {
-    logger.i('📩 Foreground message: ${message.messageId}');
-    logger.i('   Title: ${message.notification?.title}');
-    logger.i('   Body: ${message.notification?.body}');
+    _logger.i('📩 Foreground message: ${message.messageId}');
+    _logger.i('   Title: ${message.notification?.title}');
+    _logger.i('   Body: ${message.notification?.body}');
 
     // Show local notification
     final notificationService = GetIt.instance<NotificationService>();
@@ -319,17 +320,17 @@ class FirebaseService {
   }
 
   Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-    logger.i('📩 Background message: ${message.messageId}');
+    _logger.i('📩 Background message: ${message.messageId}');
     // Handle background message
   }
 
   void _handleMessageOpened(RemoteMessage message) {
-    logger.i('📩 Message opened: ${message.messageId}');
+    _logger.i('📩 Message opened: ${message.messageId}');
     // Navigate to specific screen
   }
 
   void _handleInitialMessage(RemoteMessage message) {
-    logger.i('📩 Initial message: ${message.messageId}');
+    _logger.i('📩 Initial message: ${message.messageId}');
     // Navigate to specific screen on launch
   }
 
@@ -338,9 +339,9 @@ class FirebaseService {
     try {
       // Send token to your server
       //await apiService.updateFcmToken(token);
-      logger.i('  ✓ Token synced with server');
+      _logger.i('  ✓ Token synced with server');
     } catch (e) {
-      logger.e('  ✗ Failed to sync token with server', error: e);
+      _logger.e('  ✗ Failed to sync token with server', error: e);
     }
   }
 
@@ -353,7 +354,7 @@ class FirebaseService {
     Map<String, Object>? parameters,
   }) async {
     if (_analytics == null) {
-      logger.e('Analytics is not initialized');
+      _logger.e('Analytics is not initialized');
       return;
     }
     await _analytics!.logEvent(name: name, parameters: parameters);
@@ -364,7 +365,7 @@ class FirebaseService {
     required String value,
   }) async {
     if (_analytics == null) {
-      logger.e('Analytics is not initialized');
+      _logger.e('Analytics is not initialized');
       return;
     }
     await _analytics!.setUserProperty(name: name, value: value);
@@ -372,7 +373,7 @@ class FirebaseService {
 
   Future<void> setUserId(String userId) async {
     if (_analytics == null) {
-      logger.e('Analytics is not initialized');
+      _logger.e('Analytics is not initialized');
       return;
     }
     await _analytics!.setUserId(id: userId);
@@ -380,7 +381,7 @@ class FirebaseService {
 
   Future<void> logScreenView({required String screenName, required String screenClass, Map<String, Object>? parameters}) async {
     if (_analytics == null) {
-      logger.e('Analytics is not initialized');
+      _logger.e('Analytics is not initialized');
       return;
     }
     await _analytics!.logScreenView(screenName: screenName, screenClass: screenClass, parameters: parameters);
@@ -492,10 +493,10 @@ class FirebaseService {
 
     try {
       await _remoteConfig.fetchAndActivate();
-        logger.i('Remote config fetched and activated');
+        _logger.i('Remote config fetched and activated');
       return true;
     } catch (e, stack) {
-      logger.e('Failed to fetch remote config', error: e, stackTrace: stack);
+      _logger.e('Failed to fetch remote config', error: e, stackTrace: stack);
       return false;
     }
   }
@@ -511,7 +512,7 @@ class FirebaseService {
     try {
       return await _messaging.getToken();
     } catch (e, stack) {
-      logger.e('Failed to get FCM token', error: e, stackTrace: stack);
+      _logger.e('Failed to get FCM token', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -523,7 +524,7 @@ class FirebaseService {
     try {
       await _messaging.deleteToken();
     } catch (e, stack) {
-      logger.e('Failed to delete FCM token', error: e, stackTrace: stack);
+      _logger.e('Failed to delete FCM token', error: e, stackTrace: stack);
     }
   }
 
@@ -533,9 +534,9 @@ class FirebaseService {
 
     try {
       await _messaging.subscribeToTopic(topic);
-      logger.i('Subscribed to topic: $topic');
+      _logger.i('Subscribed to topic: $topic');
     } catch (e, stack) {
-      logger.e('Failed to subscribe to topic: $topic', error: e, stackTrace: stack);
+      _logger.e('Failed to subscribe to topic: $topic', error: e, stackTrace: stack);
     }
   }
 
@@ -545,9 +546,9 @@ class FirebaseService {
 
     try {
       await _messaging.unsubscribeFromTopic(topic);
-      logger.i('Unsubscribed from topic: $topic');
+      _logger.i('Unsubscribed from topic: $topic');
     } catch (e, stack) {
-      logger.e('Failed to unsubscribe from topic: $topic', error: e, stackTrace: stack);
+      _logger.e('Failed to unsubscribe from topic: $topic', error: e, stackTrace: stack);
     }
   }
 
@@ -569,9 +570,9 @@ class FirebaseService {
       // Background message handler
       FirebaseMessaging.onBackgroundMessage(onBackgroundMessage);
 
-      logger.i('Message handlers set up');
+      _logger.i('Message handlers set up');
     } catch (e, stack) {
-      logger.e('Failed to set up message handlers', error: e, stackTrace: stack);
+      _logger.e('Failed to set up message handlers', error: e, stackTrace: stack);
     }
   }
 
@@ -582,7 +583,7 @@ class FirebaseService {
     try {
       return await _messaging.getInitialMessage();
     } catch (e, stack) {
-      logger.e('Failed to get initial message', error: e, stackTrace: stack);
+      _logger.e('Failed to get initial message', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -637,6 +638,6 @@ class FirebaseService {
   void dispose() {
     // Firebase services don't need explicit disposal
     _isInitialized = false;
-    logger.i('Firebase service disposed');
+    _logger.i('Firebase service disposed');
   }
 }

@@ -1,16 +1,18 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 class RetryInterceptor extends Interceptor {
+  final LoggerService _logger;
   final int maxRetries;
   final Duration retryDelay;
   final Set<int> retryStatusCodes;
 
   RetryInterceptor({
+    required LoggerService logger,
     this.maxRetries = 3,
     this.retryDelay = const Duration(seconds: 1),
     this.retryStatusCodes = const {500, 502, 503, 504},
-  });
+  }) : _logger = logger;
 
   @override
   Future<void> onError(
@@ -26,7 +28,7 @@ class RetryInterceptor extends Interceptor {
 
         requestOptions.extra['retry_count'] = retryCount + 1;
 
-        logger.i('🔄 Retrying request (${retryCount + 1}/$maxRetries)...');
+        _logger.i('🔄 Retrying request (${retryCount + 1}/$maxRetries)...');
 
         try {
           final response = await Dio().fetch<dynamic>(requestOptions);

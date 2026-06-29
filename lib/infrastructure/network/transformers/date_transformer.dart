@@ -1,10 +1,12 @@
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
+import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
 
 
 /// Custom JSON converter for DateTime fields
 class DateTransformer {
+  static LoggerService get _logger => getIt<LoggerService>();
   static const _defaultFormat = 'yyyy-MM-dd HH:mm:ss';
   static const _isoFormat = 'yyyy-MM-ddTHH:mm:ss.SSSZ';
   static const _utcFormat = 'yyyy-MM-ddTHH:mm:ssZ';
@@ -43,10 +45,10 @@ class DateTransformer {
           } catch (_) {}
         }
         
-        logger.w('Failed to parse date: $dateTimeString');
+        _logger.w('Failed to parse date: $dateTimeString');
         return null;
       } catch (e, stackTrace) {
-        logger.w('Failed to parse date: $dateTimeString', error: e, stackTrace: stackTrace);
+        _logger.w('Failed to parse date: $dateTimeString', error: e, stackTrace: stackTrace);
         return null;
       }
     }
@@ -63,7 +65,7 @@ class DateTransformer {
       }
       return DateTime.fromMillisecondsSinceEpoch(timestamp);
     } catch (e, stackTrace) {
-      logger.w('Failed to parse timestamp: $timestamp - $e', error: e, stackTrace: stackTrace);
+      _logger.w('Failed to parse timestamp: $timestamp - $e', error: e, stackTrace: stackTrace);
       return null;
     }
   }

@@ -1,11 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 class LoggingInterceptor extends Interceptor {
+  LoggingInterceptor(this._logger);
+
+  final LoggerService _logger;
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    logger.i('''
+    _logger.i('''
 🌐 Request:
   URL: ${options.uri}
   Method: ${options.method}
@@ -18,7 +21,7 @@ class LoggingInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    logger.i('''
+    _logger.i('''
 ✅ Response:
   URL: ${response.requestOptions.uri}
   Status: ${response.statusCode}
@@ -30,7 +33,7 @@ class LoggingInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    logger.e('''
+    _logger.e('''
 ❌ Error:
   URL: ${err.requestOptions.uri}
   Method: ${err.requestOptions.method}

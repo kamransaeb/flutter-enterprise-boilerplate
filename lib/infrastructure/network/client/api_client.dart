@@ -1,47 +1,51 @@
-import 'package:dio/dio.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/change_password_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/forget_password_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/login_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/login_response_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/register_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/register_response_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/social_login_response_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/token_refresh_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/resend_verification_email_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/reset_password_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/social_login_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/token_refresh_response_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/update_profile_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/user_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/models/verify_email_request_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/payments/data/models/initiate_payment_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/payments/data/models/refund_payment_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/payments/data/models/verify_payment_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/models/add_to_cart_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/models/apply_coupon_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/models/calculate_shipping_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/models/create_order_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/models/remove_coupon_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/models/return_order_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/models/update_cart_item_request.dart';
-import 'package:flutter_enterprise_boilerplate/features/products/data/models/product_model.dart';
-import 'package:flutter_enterprise_boilerplate/features/products/data/models/product_review_model.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/dio_client.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/address_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/features/auth/data/api/auth_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/config_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/deeplink_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/features/order/data/api/order_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/features/payments/data/api/payments_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/features/products/data/api/product_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/upload_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/features/user/data/api/user_endpoints.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/deep_link_validation_response.dart';
-import 'package:injectable/injectable.dart';
-import 'package:retrofit/dio.dart';
-import 'package:retrofit/http.dart';
+// import 'package:dio/dio.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/change_password_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/forget_password_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/login_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/login_response_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/register_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/register_response_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/social_login_response_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/token_refresh_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/resend_verification_email_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/reset_password_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/social_login_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/token_refresh_response_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/update_profile_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/user_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/models/verify_email_request_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/payments/data/models/initiate_payment_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/payments/data/models/refund_payment_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/payments/data/models/verify_payment_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/models/add_to_cart_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/models/apply_coupon_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/models/calculate_shipping_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/models/create_order_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/models/remove_coupon_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/models/return_order_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/models/update_cart_item_request.dart';
+// import 'package:flutter_enterprise_boilerplate/features/products/data/models/product_model.dart';
+// import 'package:flutter_enterprise_boilerplate/features/products/data/models/product_review_model.dart';
+// import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/dio_client.dart';
+// import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/address_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/features/auth/data/api/auth_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/config_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/deeplink_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/features/order/data/api/order_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/features/payments/data/api/payments_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/features/products/data/api/product_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/endpoints/upload_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/features/user/data/api/user_endpoints.dart';
+// import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/deep_link_validation_response.dart';
+// import 'package:injectable/injectable.dart';
+// import 'package:retrofit/dio.dart';
+// import 'package:retrofit/http.dart';
 
-part 'api_client.g.dart';
+/// *** API CLIENT *** removed!!!
+/// Split into separate api clients for each feature
+
+
+// part 'api_client.g.dart';
 
 // Case	Approach	Example
 // - Normal authenticated API calls
@@ -71,65 +75,67 @@ part 'api_client.g.dart';
 //   @Header('Authorization') required String token,
 // });
 
-@singleton
-@RestApi()
-abstract class ApiClient {
-  // @factoryMethod
-  // factory ApiClient(Dio dio, {String baseUrl}) = _ApiClient;
 
-  @factoryMethod
-  factory ApiClient(DioClient dioClient) {
-    // Get the underlying Dio instance from DioClient
-    return _ApiClient(dioClient.dio);
-  }
 
-  // ============================================================================
-  // Address Validation
-  // ============================================================================
+// @singleton
+// @RestApi()
+// abstract class ApiClient {
+//   // @factoryMethod
+//   // factory ApiClient(Dio dio, {String baseUrl}) = _ApiClient;
 
-  @POST(AddressEndpoints.validate)
-  Future<HttpResponse<Map<String, dynamic>>> validateAddress(
-    @Body() Map<String, dynamic> body,
-  );
+//   @factoryMethod
+//   factory ApiClient(DioClient dioClient) {
+//     // Get the underlying Dio instance from DioClient
+//     return _ApiClient(dioClient.dio);
+//   }
 
-  @GET(AddressEndpoints.autocomplete)
-  Future<HttpResponse<List<Map<String, dynamic>>>> addressAutocomplete(
-    @Query('query') String query,
-  );
+//   // ============================================================================
+//   // Address Validation
+//   // ============================================================================
 
-  // ============================================================================
-  // Deep Link Validation
-  // ============================================================================
+//   @POST(AddressEndpoints.validate)
+//   Future<HttpResponse<Map<String, dynamic>>> validateAddress(
+//     @Body() Map<String, dynamic> body,
+//   );
 
-  @POST(DeeplinkEndpoints.validate)
-  Future<HttpResponse<DeepLinkValidationResponse>> validateDeepLink(
-    @Body() Map<String, dynamic> body,
-  );
+//   @GET(AddressEndpoints.autocomplete)
+//   Future<HttpResponse<List<Map<String, dynamic>>>> addressAutocomplete(
+//     @Query('query') String query,
+//   );
 
-  // ============================================================================
-  // App Configuration
-  // ============================================================================
+//   // ============================================================================
+//   // Deep Link Validation
+//   // ============================================================================
 
-  @GET(ConfigEndpoints.app)
-  Future<HttpResponse<Map<String, dynamic>>> getAppConfig();
+//   @POST(DeeplinkEndpoints.validate)
+//   Future<HttpResponse<DeepLinkValidationResponse>> validateDeepLink(
+//     @Body() Map<String, dynamic> body,
+//   );
 
-  @GET(ConfigEndpoints.features)
-  Future<HttpResponse<Map<String, dynamic>>> getFeatureFlags();
+//   // ============================================================================
+//   // App Configuration
+//   // ============================================================================
 
-  // ============================================================================
-  // Upload Methods (for files/images)
-  // ============================================================================
+//   @GET(ConfigEndpoints.app)
+//   Future<HttpResponse<Map<String, dynamic>>> getAppConfig();
 
-  @POST(UploadEndpoints.image)
-  Future<HttpResponse<Map<String, dynamic>>> uploadImage(
-    @Body() FormData formData,
-  );
+//   @GET(ConfigEndpoints.features)
+//   Future<HttpResponse<Map<String, dynamic>>> getFeatureFlags();
 
-  @POST(UploadEndpoints.file)
-  Future<HttpResponse<Map<String, dynamic>>> uploadFile(
-    @Body() FormData formData,
-  );
+//   // ============================================================================
+//   // Upload Methods (for files/images)
+//   // ============================================================================
 
-  @DELETE(UploadEndpoints.deleteById)
-  Future<HttpResponse<void>> deleteFile(@Path('id') String fileId);
-}
+//   @POST(UploadEndpoints.image)
+//   Future<HttpResponse<Map<String, dynamic>>> uploadImage(
+//     @Body() FormData formData,
+//   );
+
+//   @POST(UploadEndpoints.file)
+//   Future<HttpResponse<Map<String, dynamic>>> uploadFile(
+//     @Body() FormData formData,
+//   );
+
+//   @DELETE(UploadEndpoints.deleteById)
+//   Future<HttpResponse<void>> deleteFile(@Path('id') String fileId);
+// }

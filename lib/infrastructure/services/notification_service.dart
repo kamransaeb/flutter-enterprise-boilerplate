@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/environment_service.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_it/get_it.dart';
@@ -11,9 +9,11 @@ import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 @singleton
 class NotificationService {
+  final LoggerService _logger;
   final EnvironmentService _env;
   final LocalStorage _secureStorage;
   final FlutterLocalNotificationsPlugin _localNotifications;
@@ -27,7 +27,7 @@ class NotificationService {
   // Public stream for listening to notification taps
   Stream<Map<String, dynamic>> get onNotificationTap => _onNotificationTap.stream;
 
-  NotificationService(this._env, @Named('secure_storage') this._secureStorage)
+  NotificationService(this._env, @Named('secure_storage') this._secureStorage, this._logger)
       : _localNotifications = FlutterLocalNotificationsPlugin();
 
   /// Initialize notification service
@@ -35,7 +35,7 @@ class NotificationService {
     if (_isInitialized) return;
 
     try {
-      logger.i('[Notifications] Initializing notification service...');
+      _logger.i('[Notifications] Initializing notification service...');
 
       // Initialize timezone data
       tz.initializeTimeZones();
@@ -71,9 +71,9 @@ class NotificationService {
       await _createNotificationChannels();
 
       _isInitialized = true;
-      logger.i('[Notifications] Notification service initialized');
+      _logger.i('[Notifications] Notification service initialized');
     } catch (e, stack) {
-      logger.e('[Notifications] Failed to initialize notification service', error: e, stackTrace: stack);
+      _logger.e('[Notifications] Failed to initialize notification service', error: e, stackTrace: stack);
       rethrow;
     }
   }
@@ -95,7 +95,7 @@ class NotificationService {
         return result ?? false;
       }
     } catch (e, stack) {
-      logger.e('[Notifications] Failed to request notification permissions', error: e, stackTrace: stack);
+      _logger.e('[Notifications] Failed to request notification permissions', error: e, stackTrace: stack);
       return false;
     }
   }
@@ -190,7 +190,7 @@ class NotificationService {
     DateTime? scheduledDate,
   }) async {
     if (!_isInitialized) {
-      logger.w('[Notifications] Notification service not initialized');
+      _logger.w('[Notifications] Notification service not initialized');
       return;
     }
 
@@ -209,7 +209,7 @@ class NotificationService {
           uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           payload: payload,
         );
-        logger.i('[Notifications] Scheduled notification: $title for $scheduledDate');
+        _logger.i('[Notifications] Scheduled notification: $title for $scheduledDate');
       } else {
         // Show immediately
         await _localNotifications.show(
@@ -219,10 +219,10 @@ class NotificationService {
           notificationDetails,
           payload: payload,
         );
-        logger.i('[Notifications] Shown notification: $title');
+        _logger.i('[Notifications] Shown notification: $title');
       }
     } catch (e, stack) {
-      logger.e('[Notifications] Failed to show notification', error: e, stackTrace: stack);
+      _logger.e('[Notifications] Failed to show notification', error: e, stackTrace: stack);
     }
   }
 
@@ -382,19 +382,19 @@ class NotificationService {
       payload: payload,
     );
     
-    logger.i('[Notifications] Scheduled recurring notification: $title');
+    _logger.i('[Notifications] Scheduled recurring notification: $title');
   }
 
   /// Cancel a notification
   Future<void> cancelNotification(int id) async {
     await _localNotifications.cancel(id);
-    logger.i('[Notifications] Cancelled notification: $id');
+    _logger.i('[Notifications] Cancelled notification: $id');
   }
 
   /// Cancel all notifications
   Future<void> cancelAllNotifications() async {
     await _localNotifications.cancelAll();
-    logger.i('[Notifications] Cancelled all notifications');
+    _logger.i('[Notifications] Cancelled all notifications');
   }
 
   /// Get notification details from payload
@@ -403,7 +403,7 @@ class NotificationService {
     try {
       return jsonDecode(payload) as Map<String, dynamic>;
     } catch (e) {
-      logger.e('[Notifications] Failed to parse notification payload', error: e);
+      _logger.e('[Notifications] Failed to parse notification payload', error: e);
       return null;
     }
   }
@@ -432,7 +432,7 @@ class NotificationService {
   Future<void> updateDeviceToken(String token) async {
     _deviceToken = token;
     await _secureStorage.write('fcm_token', token);
-    logger.i('[Notifications] Device token updated');
+    _logger.i('[Notifications] Device token updated');
   }
 
   /// Get device token
@@ -446,7 +446,7 @@ class NotificationService {
   Future<void> clearDeviceToken() async {
     _deviceToken = null;
     await _secureStorage.delete('fcm_token');
-    logger.i('[Notifications] Device token cleared');
+    _logger.i('[Notifications] Device token cleared');
   }
 
   /// Create notification details
@@ -587,13 +587,13 @@ class NotificationService {
     String? body,
     String? payload,
   ) {
-    logger.i('[Notifications] Local notification received in foreground');
+    _logger.i('[Notifications] Local notification received in foreground');
     _handleNotificationTap(payload);
   }
 
   /// Handle notification selection
   void _onSelectNotification(NotificationResponse response) {
-    logger.i('[Notifications] Notification selected: ${response.payload}');
+    _logger.i('[Notifications] Notification selected: ${response.payload}');
     _handleNotificationTap(response.payload);
   }
 
@@ -613,10 +613,10 @@ class NotificationService {
     if (payload != null && payload.isNotEmpty) {
       try {
         final data = jsonDecode(payload) as Map<String, dynamic>;
-        logger.i('[Notifications] Adding notification tap to stream: ${data.keys}');
+        _logger.i('[Notifications] Adding notification tap to stream: ${data.keys}');
         _onNotificationTap.add(data);
       } catch (e, stack) {
-        logger.e('[Notifications] Failed to parse notification payload on tap', error: e, stackTrace: stack);
+        _logger.e('[Notifications] Failed to parse notification payload on tap', error: e, stackTrace: stack);
         
         // Still add a basic entry with raw payload
         _onNotificationTap.add({
@@ -625,7 +625,7 @@ class NotificationService {
         });
       }
     } else {
-      logger.i('[Notifications] Notification tapped with no payload');
+      _logger.i('[Notifications] Notification tapped with no payload');
       _onNotificationTap.add({});
     }
   }
@@ -638,7 +638,7 @@ class NotificationService {
   /// Dispose service
   void dispose() {
     _onNotificationTap.close();
-    logger.i('[Notifications] Notification service disposed');
+    _logger.i('[Notifications] Notification service disposed');
   }
 }
 

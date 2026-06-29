@@ -1,15 +1,15 @@
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/environment_service.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 @singleton
 class SentryService {
+  final LoggerService _logger;
   static bool _isInitialized = false;
   final EnvironmentService _env;
 
-  SentryService(this._env);
+  SentryService(this._env, this._logger);
   
   /// Initialize Sentry
   Future<void> initialize({
@@ -43,7 +43,7 @@ class SentryService {
       
       _isInitialized = true;
     } catch (e, stack) {
-      logger.e('[Sentry] Failed to initialize Sentry', error: e, stackTrace: stack);
+      _logger.e('[Sentry] Failed to initialize Sentry', error: e, stackTrace: stack);
     }
   }
 
@@ -70,7 +70,7 @@ class SentryService {
         },
       );
     } catch (e) {
-      logger.e('[Sentry] Failed to capture exception', error: e);
+      _logger.e('[Sentry] Failed to capture exception', error: e);
     }
   }
 
@@ -95,7 +95,7 @@ class SentryService {
         },
       );
     } catch (e) {
-      logger.e('[Sentry] Failed to capture message', error: e);
+      _logger.e('[Sentry] Failed to capture message', error: e);
     }
   }
 
@@ -118,7 +118,7 @@ class SentryService {
         ));
       });
     } catch (e) {
-      logger.e('[Sentry] Failed to set user', error: e);
+      _logger.e('[Sentry] Failed to set user', error: e);
     }
   }
 
@@ -130,7 +130,7 @@ class SentryService {
         scope.setUser(null);
       });
     } catch (e) {
-      logger.e('[Sentry] Failed to clear user', error: e);
+      _logger.e('[Sentry] Failed to clear user', error: e);
     }
   }
 
@@ -150,7 +150,7 @@ class SentryService {
         level: level,
       ));
     } catch (e) {
-      logger.e('[Sentry] Failed to add breadcrumb', error: e);
+      _logger.e('[Sentry] Failed to add breadcrumb', error: e);
     }
   }
 
@@ -162,7 +162,7 @@ class SentryService {
         scope.setTag(key, value);
       });
     } catch (e) {
-      logger.e('[Sentry] Failed to set tag', error: e);
+      _logger.e('[Sentry] Failed to set tag', error: e);
     }
   }
 
@@ -174,7 +174,7 @@ class SentryService {
         scope.setExtra(key, value);
       });
     } catch (e) {
-      logger.e('[Sentry] Failed to set extra', error: e);
+      _logger.e('[Sentry] Failed to set extra', error: e);
     }
   }
 
@@ -202,7 +202,7 @@ class SentryService {
 
       return transaction;
     } catch (e) {
-      logger.e('[Sentry] Failed to start transaction', error: e);
+      _logger.e('[Sentry] Failed to start transaction', error: e);
       return null;
     }
   }

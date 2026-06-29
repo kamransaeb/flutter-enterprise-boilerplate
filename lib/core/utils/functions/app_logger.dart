@@ -1,9 +1,9 @@
 // import 'package:flutter_enterprise_boilerplate/app/app_config.dart';
 // import 'package:logger/logger.dart';
 
-// /// App logger (package:logger). Call [AppLogger.initialize] from bootstrap.
+// /// App logger (package:logger). Call [LoggerService.initialize] from bootstrap.
 // /// Singleton: only one instance is created; re-initialization is a no-op.
-// class AppLogger {
+// class LoggerService {
 //   static Logger? _instance;
 //   static bool _initialized = false;
 
@@ -11,7 +11,7 @@
 //   static Logger get logger {
 //     if (!_initialized || _instance == null) {
 //       throw StateError(
-//         'AppLogger not initialized. Call AppLogger.initialize(appConfig) from bootstrap.',
+//         'LoggerService not initialized. Call LoggerService.initialize(appConfig) from bootstrap.',
 //       );
 //     }
 //     return _instance!;
@@ -60,5 +60,5 @@
 //   };
 // }
 
-// /// Top-level getter so call sites can use [logger] instead of [AppLogger.logger].
-// Logger get logger => AppLogger.logger;
+// /// Top-level getter so call sites can use [logger] instead of [LoggerService.logger].
+// Logger get logger => LoggerService.logger;

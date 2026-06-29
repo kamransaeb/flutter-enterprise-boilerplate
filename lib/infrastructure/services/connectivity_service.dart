@@ -1,19 +1,22 @@
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 enum InternetQuality { connected, disconnected, slowConnection }
 
 @singleton
 class ConnectivityService {
+  final LoggerService _logger;
   final Connectivity _connectivity = Connectivity();
   final BehaviorSubject<ConnectivityResult> _connectivityStream =
       BehaviorSubject<ConnectivityResult>.seeded(ConnectivityResult.none);
 
   bool _isInitialized = false;
+
+  ConnectivityService(this._logger);
 
   static const int _slowConnectionThreshold = 3000; // milliseconds
 
@@ -28,7 +31,7 @@ class ConnectivityService {
     if (_isInitialized) return;
 
     try {
-      logger.i('[Connectivity] Initializing connectivity service...');
+      _logger.i('[Connectivity] Initializing connectivity service...');
 
       // Get initial connectivity status (API returns List<ConnectivityResult>)
       final result = await _connectivity.checkConnectivity();
@@ -40,13 +43,13 @@ class ConnectivityService {
       ) {
         final single = _toSingleResult(result);
         _connectivityStream.add(single);
-        logger.d('[Connectivity] Connectivity changed: $single');
+        _logger.d('[Connectivity] Connectivity changed: $single');
       });
 
       _isInitialized = true;
-      logger.i('[Connectivity] Connectivity service initialized');
+      _logger.i('[Connectivity] Connectivity service initialized');
     } catch (e, stack) {
-      logger.e(
+      _logger.e(
         '[Connectivity] Failed to initialize connectivity service',
         error: e,
         stackTrace: stack,
@@ -62,7 +65,7 @@ class ConnectivityService {
       final result = await _connectivity.checkConnectivity();
       return result.any((r) => r != ConnectivityResult.none);
     } catch (e) {
-      logger.e('[Connectivity] Failed to check connectivity', error: e);
+      _logger.e('[Connectivity] Failed to check connectivity', error: e);
       return false;
     }
   }
@@ -92,7 +95,7 @@ class ConnectivityService {
         return InternetQuality.slowConnection;
       }
     } catch (e) {
-      logger.e('[Connectivity] Failed to check internet access', error: e);
+      _logger.e('[Connectivity] Failed to check internet access', error: e);
       return InternetQuality.disconnected;
     }
   }

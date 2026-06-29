@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
 import '../../../core/constants/regex_constants.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// JSON transformer for handling JSON serialization/deserialization
 @singleton
 class JsonTransformer {
+  final LoggerService _logger;
 
-  JsonTransformer();
+  JsonTransformer(this._logger);
 
   /// Transform response to JSON
   Map<String, dynamic> toJson(dynamic data) {
@@ -34,7 +35,7 @@ class JsonTransformer {
       
       throw ArgumentError('Cannot convert ${data.runtimeType} to JSON');
     } catch (e, stackTrace) {
-      logger.e('Failed to convert to JSON', error: e, stackTrace: stackTrace);
+      _logger.e('Failed to convert to JSON', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -67,7 +68,7 @@ class JsonTransformer {
       
       throw ArgumentError('Cannot convert ${data.runtimeType} to JSON List');
     } catch (e, stackTrace) {
-      logger.e('Failed to convert to JSON list', error: e, stackTrace: stackTrace);
+      _logger.e('Failed to convert to JSON list', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -115,7 +116,7 @@ class JsonTransformer {
       const encoder = JsonEncoder.withIndent('  ');
       return encoder.convert(json);
     } catch (e, stackTrace) {
-      logger.e('Failed to pretty print JSON', error: e, stackTrace: stackTrace);
+      _logger.e('Failed to pretty print JSON', error: e, stackTrace: stackTrace);
       return json.toString();
     }
   }
@@ -126,7 +127,7 @@ class JsonTransformer {
       const encoder = JsonEncoder();
       return encoder.convert(json);
     } catch (e, stackTrace) {
-      logger.e('Failed to minify JSON', error: e, stackTrace: stackTrace);
+      _logger.e('Failed to minify JSON', error: e, stackTrace: stackTrace);
       return json.toString();
     }
   }

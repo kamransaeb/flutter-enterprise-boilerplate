@@ -12,14 +12,15 @@ import 'package:flutter_enterprise_boilerplate/features/auth/data/models/auth_to
 import 'package:flutter_enterprise_boilerplate/features/auth/data/models/user_model.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/entities/auth_tokens.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/entities/user.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/hive_storage.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 @LazySingleton(as: AuthLocalDataSource)
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
+  final LoggerService _logger;
   final LocalStorage _secureStorage;
   final LocalStorage _sharedPrefsStorage;
   final LocalStorage _hiveStorage;
@@ -33,7 +34,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     @Named('secure_storage') required LocalStorage secureStorage,
     @Named('shared_prefs') required LocalStorage sharedPrefsStorage,
     @Named('hive_storage') required LocalStorage hiveStorage,
+    required LoggerService logger,
   }) : _secureStorage = secureStorage,
+       _logger = logger,
        _sharedPrefsStorage = sharedPrefsStorage,
        _hiveStorage = hiveStorage,
        _encrypter = Encrypter(
@@ -146,7 +149,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
         authTokensModel.expiresAt.toIso8601String(),
       ),
       ]);
-      logger.i('[AuthLocalDataSourceImpl] Tokens cached successfully');
+      _logger.i('[AuthLocalDataSourceImpl] Tokens cached successfully');
       return const Right(null);
     } catch (e) {
       return Left(

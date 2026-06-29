@@ -39,6 +39,22 @@ abstract class ProductRepository {
   Future<Either<Failure, List<ProductCategory>>> getCategories({
     String? parentId,
   });
+
+  Future<Either<Failure, ProductCategory>> getCategoryById({
+    required String categoryId,
+  });
+
+  Future<Either<Failure, List<Product>>> getProductsByIds({
+    required List<String> productIds,
+  });
+
+  Future<Either<Failure, List<Product>>> searchProducts(
+    String query, {
+    int page,
+    int limit,
+  });
+
+  Future<Either<Failure, List<Product>>> filterProducts(ProductFilter filter);
   
   // Review operations
   Future<Either<Failure, List<ProductReview>>> getProductReviews(
@@ -63,12 +79,20 @@ abstract class ProductRepository {
 
   Future<Either<Failure, void>> addToWishlist(String productId);
   Future<Either<Failure, void>> removeFromWishlist(String productId);
+
+  Future<Either<Failure, bool>> isInWishlist(String productId);
+
+  Future<Either<Failure, void>> clearWishlist();
   
   
   // Recently viewed
   Future<Either<Failure, List<Product>>> getRecentlyViewed({
     int limit,
   });
+
+  Future<Either<Failure, void>> addToRecentlyViewed(String productId);
+
+  Future<Either<Failure, void>> clearRecentlyViewed();
   
   // // Analytics
   // Future<Either<Failure, void>> trackProductView(String productId);
@@ -79,4 +103,8 @@ abstract class ProductRepository {
   
   // Cache management
   Future<Either<Failure, void>> clearCache();
+
+  Future<Either<Failure, void>> clearExpiredCache();
+
+  Future<Either<Failure, int>> getCacheSize();
 }

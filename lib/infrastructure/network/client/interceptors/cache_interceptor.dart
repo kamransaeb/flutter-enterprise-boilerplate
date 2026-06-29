@@ -6,15 +6,18 @@ import 'package:dio/dio.dart';
 import 'package:flutter_enterprise_boilerplate/core/errors/error_handler.dart';
 import 'package:flutter_enterprise_boilerplate/core/errors/failures.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/cache/cache_manager.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 /// Interceptor for caching GET requests
 @lazySingleton
 class CacheInterceptor extends Interceptor {
+  final LoggerService _logger;
   final CacheManager _cacheManager;
 
-  CacheInterceptor({required CacheManager cacheManager}) : _cacheManager = cacheManager;
+  CacheInterceptor({required CacheManager cacheManager, required LoggerService logger})
+      : _cacheManager = cacheManager,
+        _logger = logger;
 
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
@@ -54,7 +57,7 @@ class CacheInterceptor extends Interceptor {
           return handler.resolve(response);
         } catch (e) {
           // Failed to parse cached data, return original request
-          logger.e('Failed to parse cached data for key: $cacheKey', error: e);
+          _logger.e('Failed to parse cached data for key: $cacheKey', error: e);
         }
       }
     });
@@ -91,7 +94,7 @@ class CacheInterceptor extends Interceptor {
         });        
       } catch (e) {
         // Failed to cache data, return original response
-        logger.e('Failed to cache data for key: $cacheKey', error: e);
+        _logger.e('Failed to cache data for key: $cacheKey', error: e);
       }
     }
     handler.next(response);
@@ -121,7 +124,7 @@ class CacheInterceptor extends Interceptor {
           return handler.resolve(response);
           } catch (e) {
             // Failed to parse cached data, return original error
-            logger.e('Failed to parse cached data for key: $cacheKey', error: e);
+            _logger.e('Failed to parse cached data for key: $cacheKey', error: e);
           }
         }
       });

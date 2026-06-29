@@ -2,15 +2,17 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:flutter_enterprise_boilerplate/core/utils/functions/app_logger.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/entities/user.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/di/injection.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/firebase/firebase_service.dart';
-import 'package:flutter_enterprise_boilerplate/infrastructure/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/services/remote_config_service.dart';
+import 'package:flutter_enterprise_boilerplate/core/navigation/app_router.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 abstract class BaseAutoRouteGuard extends AutoRouteGuard {
+  static LoggerService get _logger => getIt<LoggerService>();
+
   const BaseAutoRouteGuard();
 
   /// Get current context from the router
@@ -20,7 +22,7 @@ abstract class BaseAutoRouteGuard extends AutoRouteGuard {
 
   /// Log navigation attempt.
   void logNavigation(String guardName, String path, bool allowed) {
-    logger.d(
+    _logger.d(
       'AutoRouteGuard[$guardName]: $path - ${allowed ? 'ALLOWED' : 'DENIED'}',
     );
   }
@@ -107,8 +109,8 @@ class RoleGuard extends BaseAutoRouteGuard {
       orElse: () => null,
     );
     if (user != null) {
-      final userRole = user.role;
-      final allowed = allowedRoles.contains(userRole);
+      List<String> userRoles = user.roles;
+      final allowed = allowedRoles.any(userRoles.contains);
       if (allowed) {
         logNavigation('RoleGuard', resolver.route.path, true);
         resolver.resolveNext(true);
@@ -118,7 +120,7 @@ class RoleGuard extends BaseAutoRouteGuard {
         resolver.resolveNext(false);
       }
     } else {
-      await router.replace(const LoginRoute());
+      await router.replace(LoginRoute());
       resolver.resolveNext(false);
     }
   }
@@ -140,7 +142,7 @@ class FeatureFlagGuard extends BaseAutoRouteGuard {
       return;
     }
 
-    final remoteConfig = getIt<RemoteConfigeService>();
+    final remoteConfig = getIt<RemoteConfigService>();
     final isEnabled = remoteConfig.getBool(featureFlag);
     logNavigation('FeatureFlagGuard', resolver.route.path, isEnabled);
     if (isEnabled) {
@@ -223,7 +225,7 @@ class MaintenanceGuard extends BaseAutoRouteGuard {
 
     // Check if maintenance mode is enabled
     final isMaintenanceMode = _remoteConfigService.getBool('maintenance_mode');
-    logger.d('MaintenanceGuard: $currentPath - $isMaintenanceMode');
+    BaseAutoRouteGuard._logger.d('MaintenanceGuard: $currentPath - $isMaintenanceMode');
     // If not under maintenance, allow navigation
     if (!isMaintenanceMode) {
       resolver.resolveNext(true);
@@ -237,7 +239,7 @@ class MaintenanceGuard extends BaseAutoRouteGuard {
     if (isAllowedRoute) {
       resolver.resolveNext(true);
     } else {
-      logger.d(
+      BaseAutoRouteGuard._logger.d(
         'MaintenanceGuard: $currentPath - Not allowed during maintenance',
       );
       resolver.resolveNext(false);
