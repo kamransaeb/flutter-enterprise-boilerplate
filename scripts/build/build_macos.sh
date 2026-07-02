@@ -95,7 +95,7 @@ if [[ "$POD_INSTALL" == true ]]; then
 fi
 
 echo "🏗️ Building macOS app..."
-fvm flutter build macos --release -t "$TARGET"
+$FLUTTER_CMD build macos --release -t "$TARGET"
 
 echo "✅ macOS build completed!"
 echo "📦 Output: build/macos/Build/Products/Release"

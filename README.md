@@ -233,6 +233,33 @@ scripts/
     └── update_dependencies.sh
 ```
 
+### CI helpers
+
+```bash
+# Setup runtime + dependencies (works in CI and local shells)
+./scripts/ci/setup_environment.sh
+
+# Pre-build steps
+./scripts/ci/prepare_build.sh --codegen
+./scripts/ci/prepare_build.sh --codegen --skip-tests
+```
+
+### Tools helpers
+
+```bash
+# Clean workspace and refresh dependencies
+./scripts/tools/clean_project.sh
+
+# Quick environment/project health checks
+./scripts/tools/check_health.sh
+
+# Upgrade dependencies (safe defaults)
+./scripts/tools/update_dependencies.sh
+
+# Include major version bumps
+./scripts/tools/update_dependencies.sh --major
+```
+
 ## Testing
 
 ```bash
@@ -305,8 +332,29 @@ In CI/CD, set these as GitHub Secrets for production builds.
 
 Workflows in `.github/workflows/`:
 
-- `ci.yml` — analyze, test, Android/iOS builds
-- `cd.yml`, `release.yml`, `nightly.yml`, `codeql-analysis.yml`
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push/PR to `main`, `develop` | Analyze, test/coverage, Android/iOS/web build verification |
+| `cd.yml` | Successful `CI Pipeline` on `main`, or manual dispatch | Deploy web to Firebase Hosting (`scripts/deploy/deploy_firebase.sh`) |
+| `release.yml` | Tag `v*.*.*`, or manual dispatch | Build prod artifacts and publish GitHub Release assets |
+| `nightly.yml` | Daily schedule (`02:00 UTC`), or manual dispatch | Nightly codegen + tests + dependency report |
+| `codeql-analysis.yml` | Push/PR + weekly schedule | CodeQL security scan (`dart`, `javascript`) |
+
+### Reproduce CI jobs locally
+
+| CI job | Local equivalent |
+|--------|------------------|
+| Analyze | `./scripts/ci/setup_environment.sh` + `flutter analyze --fatal-infos` + `./scripts/quality/check_formatting.sh` |
+| Test | `./scripts/ci/setup_environment.sh` + `./scripts/quality/generate_coverage.sh` |
+| Build Android | `./scripts/build/build_android.sh -f prod --skip-analyze --skip-test` |
+| Build iOS | `./scripts/build/build_ios.sh -f prod --skip-analyze --skip-test --skip-pod-install` |
+| Build Web | `./scripts/build/build_web.sh -f prod --skip-analyze --skip-test` |
+| CD deploy | `./scripts/deploy/deploy_firebase.sh -f prod` |
+
+Required GitHub secrets for CD:
+
+- `FIREBASE_TOKEN`
+- `FIREBASE_PROJECT_ID` (optional override; defaults by flavor in deploy script)
 
 ## Contributing
 

@@ -1,0 +1,93 @@
+name: Release Pipeline
+
+# Build release artifacts when a version tag is pushed (v*.*.*).
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.x'
+
+jobs:
+  build-release-artifacts:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: chmod +x ./scripts/ci/setup_environment.sh ./scripts/ci/prepare_build.sh ./scripts/build/build_android.sh ./scripts/build/build_web.sh ./scripts/build/_common.sh
+      - run: ./scripts/ci/setup_environment.sh
+      - run: ./scripts/ci/prepare_build.sh --codegen --skip-tests
+      - run: ./scripts/build/build_android.sh -f prod --skip-analyze --skip-test --bundle-only
+      - run: ./scripts/build/build_web.sh -f prod --skip-analyze --skip-test --skip-clean
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-android-aab
+          path: build/app/outputs/bundle/prodRelease/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-web
+          path: build/web/
+
+  build-ios-release:
+    name: Build iOS Release
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: chmod +x ./scripts/ci/setup_environment.sh ./scripts/build/build_ios.sh ./scripts/build/_common.sh
+      - run: ./scripts/ci/setup_environment.sh
+      - run: ./scripts/build/build_ios.sh -f prod --skip-analyze --skip-test --skip-pod-install
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-ios-build
+          path: build/ios/
+
+  publish-github-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-release-artifacts, build-ios-release]
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-android-aab
+          path: artifacts/android
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-web
+          path: artifacts/web
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-ios-build
+          path: artifacts/ios
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/android/**
+            artifacts/web/**
+            artifacts/ios/**
+          generate_release_notes: true

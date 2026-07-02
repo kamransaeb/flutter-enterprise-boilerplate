@@ -101,13 +101,13 @@ run_preflight
 
 if [[ "$BUILD_APK" == true ]]; then
     echo "📦 Building APK..."
-    fvm flutter build apk --release --flavor "$FLAVOR" -t "$TARGET"
+    $FLUTTER_CMD build apk --release --flavor "$FLAVOR" -t "$TARGET"
     echo "✅ APK build completed."
 fi
 
 if [[ "$BUILD_BUNDLE" == true ]]; then
     echo "📦 Building App Bundle..."
-    fvm flutter build appbundle --release --flavor "$FLAVOR" -t "$TARGET"
+    $FLUTTER_CMD build appbundle --release --flavor "$FLAVOR" -t "$TARGET"
     echo "✅ App Bundle build completed."
 fi
 

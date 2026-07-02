@@ -2,6 +2,22 @@
 
 # Shared helpers for release build scripts.
 
+FLUTTER_CMD=""
+DART_CMD=""
+
+resolve_toolchain() {
+    if command -v fvm &> /dev/null; then
+        FLUTTER_CMD="fvm flutter"
+        DART_CMD="fvm dart"
+    elif command -v flutter &> /dev/null && command -v dart &> /dev/null; then
+        FLUTTER_CMD="flutter"
+        DART_CMD="dart"
+    else
+        echo "Error: Neither fvm nor flutter/dart is available in PATH."
+        exit 1
+    fi
+}
+
 validate_project_root() {
     if [[ ! -f "pubspec.yaml" ]]; then
         echo "Error: This script must be run from the project root directory."
@@ -10,10 +26,7 @@ validate_project_root() {
 }
 
 validate_fvm() {
-    if ! command -v fvm &> /dev/null; then
-        echo "Error: fvm is not installed or not in PATH."
-        exit 1
-    fi
+    resolve_toolchain
 }
 
 validate_flavor() {
@@ -50,27 +63,29 @@ print_build_config() {
 }
 
 run_preflight() {
+    resolve_toolchain
+
     if [[ "$SKIP_CLEAN" != true ]]; then
         echo "🧹 Cleaning project..."
-        fvm flutter clean
+        $FLUTTER_CMD clean
     fi
 
     echo "📦 Fetching dependencies..."
-    fvm flutter pub get
+    $FLUTTER_CMD pub get
 
     if [[ "$SKIP_CODEGEN" != true ]]; then
         echo "⚙️ Running code generation..."
-        fvm dart run build_runner build --delete-conflicting-outputs
+        $DART_CMD run build_runner build --delete-conflicting-outputs
     fi
 
     if [[ "$SKIP_ANALYZE" != true ]]; then
         echo "🔎 Running static analysis..."
-        fvm flutter analyze --fatal-infos
+        $FLUTTER_CMD analyze --fatal-infos
     fi
 
     if [[ "$SKIP_TEST" != true ]]; then
         echo "🧪 Running tests..."
-        fvm flutter test --test-randomize-ordering-seed=random
+        $FLUTTER_CMD test --test-randomize-ordering-seed=random
     fi
 }
 

@@ -90,7 +90,7 @@ echo "🌐 Building web release..."
 print_build_config
 run_preflight
 
-BUILD_CMD=(fvm flutter build web --release -t "$TARGET")
+BUILD_CMD=($FLUTTER_CMD build web --release -t "$TARGET")
 
 if [[ -n "$WEB_RENDERER" ]]; then
     BUILD_CMD+=(--web-renderer "$WEB_RENDERER")

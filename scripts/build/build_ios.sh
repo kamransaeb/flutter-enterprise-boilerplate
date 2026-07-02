@@ -130,7 +130,7 @@ if [[ "$POD_INSTALL" == true ]]; then
 fi
 
 echo "🏗️ Building iOS app..."
-fvm flutter build ios --release --no-codesign --flavor "$FLAVOR" -t "$TARGET"
+$FLUTTER_CMD build ios --release --no-codesign --flavor "$FLAVOR" -t "$TARGET"
 
 if [[ "$ARCHIVE" != true ]]; then
     echo "✅ iOS build completed (no archive/export)."

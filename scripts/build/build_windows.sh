@@ -84,7 +84,7 @@ print_build_config
 run_preflight
 
 echo "🏗️ Building Windows app..."
-fvm flutter build windows --release -t "$TARGET"
+$FLUTTER_CMD build windows --release -t "$TARGET"
 
 echo "✅ Windows build completed!"
 echo "📦 Output: build/windows/x64/runner/Release"

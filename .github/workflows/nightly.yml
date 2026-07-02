@@ -1,0 +1,33 @@
+name: Nightly Pipeline
+
+# Scheduled health and quality checks.
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.x'
+
+jobs:
+  nightly-quality:
+    name: Nightly Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: chmod +x ./scripts/ci/setup_environment.sh ./scripts/ci/prepare_build.sh ./scripts/quality/run_tests.sh ./scripts/tools/update_dependencies.sh
+      - run: ./scripts/ci/setup_environment.sh
+      - run: ./scripts/ci/prepare_build.sh --codegen
+      - run: ./scripts/quality/run_tests.sh
+
+      - name: Report outdated dependencies
+        run: flutter pub outdated
+        continue-on-error: true

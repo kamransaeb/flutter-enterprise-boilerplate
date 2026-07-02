@@ -11,11 +11,6 @@ if [[ ! -f "pubspec.yaml" ]]; then
     exit 1
 fi
 
-if ! command -v fvm >/dev/null 2>&1; then
-    echo "Error: fvm is not installed or not in PATH."
-    exit 1
-fi
-
 if ! command -v firebase >/dev/null 2>&1; then
     echo "Error: firebase CLI is not installed."
     echo "Install with: npm install -g firebase-tools"

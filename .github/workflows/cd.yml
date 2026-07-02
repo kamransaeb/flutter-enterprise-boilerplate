@@ -1,0 +1,69 @@
+name: CD Pipeline
+
+# Continuous deployment: publish web hosting after successful CI on main,
+# or on manual dispatch with a selected flavor.
+
+on:
+  workflow_run:
+    workflows: [CI Pipeline]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: Deploy flavor
+        required: true
+        default: prod
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  FLUTTER_VERSION: '3.x'
+
+jobs:
+  deploy-firebase:
+    name: Deploy Firebase Hosting
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Resolve deploy flavor
+        id: flavor
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "value=${{ github.event.inputs.flavor }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=prod" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: chmod +x ./scripts/ci/setup_environment.sh ./scripts/deploy/deploy_firebase.sh ./scripts/deploy/deploy_web.sh ./scripts/build/build_web.sh ./scripts/build/_common.sh
+
+      - run: ./scripts/ci/setup_environment.sh
+
+      - name: Deploy to Firebase
+        run: ./scripts/deploy/deploy_firebase.sh -f "${{ steps.flavor.outputs.value }}"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
