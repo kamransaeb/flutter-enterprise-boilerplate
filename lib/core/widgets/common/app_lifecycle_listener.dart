@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_enterprise_boilerplate/core/bloc/app_lifecycle/app_lifecycle_bloc.dart';
@@ -11,8 +9,9 @@ class AppLifecycleListener extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AppLifecycleBloc, AppLifecycleState>(
-      listenWhen: (previous, current) => 
-          previous.status != current.status,
+      listenWhen: (previous, current) =>
+          previous.isBackground != current.isBackground ||
+          previous.isResumed != current.isResumed,
       listener: (context, state) {
         if (state.isBackground) {
           // App went to background - pause timers, etc.

@@ -21,7 +21,6 @@ A production-ready Flutter application following **Clean Architecture**, feature
 - [FVM](https://fvm.app/) (project uses `fvm flutter` / `fvm dart`)
 - Flutter SDK (compatible with Dart `^3.10.3` — see `pubspec.yaml`)
 - Xcode (iOS), Android Studio / SDK (Android)
-- [Melos](https://melos.invertase.dev/) (optional, for monorepo scripts)
 
 ## Getting Started
 
@@ -51,11 +50,10 @@ Generates Freezed, Injectable, Retrofit (`api_client.g.dart`), AutoRoute (`app_r
 fvm dart run build_runner build --delete-conflicting-outputs
 ```
 
-Or use the script / Melos:
+Or use the script:
 
 ```bash
 ./scripts/codegen/generate_code.sh
-melos run build_runner
 ```
 
 **Note:** `build.yaml` scopes Retrofit and AutoRoute to specific paths. Ensure `lib/infrastructure/network/client/api_client.dart` is included in Retrofit `generate_for` if `api_client.g.dart` is missing.
@@ -91,15 +89,6 @@ cd ios && pod install && cd ..
 ./scripts/run/run_app.sh -f dev -- --release
 ```
 
-### Melos shortcuts
-
-```bash
-melos run run_dev
-melos run run_staging
-melos run run_prod
-melos run run_list_devices
-```
-
 ### Manual `flutter run`
 
 ```bash
@@ -130,7 +119,11 @@ fvm flutter build appbundle --flavor prod -t lib/main_prod.dart
 Full pipeline (clean, codegen, analyze, test, build):
 
 ```bash
-./scripts/build/build_android.sh
+./scripts/build/build_android.sh -f prod
+# APK only
+./scripts/build/build_android.sh -f staging --apk-only
+# Skip long preflight stages
+./scripts/build/build_android.sh -f dev --skip-test --skip-analyze
 ```
 
 ### iOS
@@ -142,14 +135,66 @@ fvm flutter build ios --flavor dev -t lib/main_dev.dart --no-codesign
 Archive in Xcode using scheme **`dev`**, **`staging`**, or **`prod`**.
 
 ```bash
-./scripts/build/build_ios.sh   # requires APPLE_TEAM_ID
+# Build without signing/export
+./scripts/build/build_ios.sh -f prod
+
+# Build + archive + export IPA
+APPLE_TEAM_ID=XXXXXXXXXX ./scripts/build/build_ios.sh -f prod --archive
 ```
 
 ### Other platforms
 
-- `scripts/build/build_web.sh`
-- `scripts/build/build_macos.sh`
-- `scripts/build/build_windows.sh`
+```bash
+./scripts/build/build_web.sh -f staging
+./scripts/build/build_macos.sh -f prod
+./scripts/build/build_windows.sh -f prod
+```
+
+## Deployment
+
+### Firebase / Hosting
+
+```bash
+# Hosting only (default)
+./scripts/deploy/deploy_firebase.sh -f staging
+
+# Hosting + functions + rules
+./scripts/deploy/deploy_firebase.sh -f prod --all
+
+# Web convenience wrapper
+./scripts/deploy/deploy_web.sh -f prod
+```
+
+Environment:
+
+- `FIREBASE_TOKEN` for CI/non-interactive deployments
+- `FIREBASE_PROJECT_ID` (optional override)
+
+### Google Play
+
+```bash
+# Build app bundle only
+./scripts/deploy/deploy_playstore.sh -f prod
+
+# Build + upload to Play internal track
+SUPPLY_JSON_KEY=/path/key.json \
+SUPPLY_PACKAGE_NAME=com.example.app \
+./scripts/deploy/deploy_playstore.sh -f prod --upload --track internal
+```
+
+### App Store Connect
+
+```bash
+# Build/archive IPA only
+APPLE_TEAM_ID=XXXXXXXXXX \
+./scripts/deploy/deploy_appstore.sh -f prod
+
+# Upload existing IPA
+APP_STORE_CONNECT_API_KEY_PATH=/path/AuthKey_ABC123XYZ.p8 \
+APP_STORE_CONNECT_API_KEY_ID=ABC123XYZ \
+APP_STORE_CONNECT_ISSUER_ID=00000000-0000-0000-0000-000000000000 \
+./scripts/deploy/deploy_appstore.sh --no-build --artifact build/ios/ipa/prod/Runner.ipa --upload
+```
 
 ## Scripts Reference
 
@@ -187,18 +232,6 @@ scripts/
     ├── check_health.sh
     └── update_dependencies.sh
 ```
-
-## Melos Scripts
-
-| Command | Description |
-|---------|-------------|
-| `melos run analyze` | `fvm flutter analyze --fatal-infos` |
-| `melos run test` | Tests with coverage |
-| `melos run format` | Format check |
-| `melos run build_runner` | Code generation |
-| `melos run build_runner_watch` | Watch mode |
-| `melos run clean` | Clean + pub get |
-| `melos run run_dev` / `run_staging` / `run_prod` | Run flavors |
 
 ## Testing
 
@@ -238,7 +271,7 @@ lib/
 └── infrastructure/           # DI, network, cache, storage, services
 
 assets/
-├── translations/             # ARB + generated localizations
+├── translations/             # easy_localization JSON files
 ├── images/
 ├── animations/
 └── fonts/
@@ -278,7 +311,7 @@ Workflows in `.github/workflows/`:
 ## Contributing
 
 1. Follow existing Clean Architecture and bloc/Freezed patterns
-2. Run `fvm flutter analyze` (or `melos run analyze`)
+2. Run `fvm flutter analyze`
 3. Run tests before opening a PR
 4. Regenerate code when changing annotated classes
 5. Update this README when adding scripts, flavors, or tooling

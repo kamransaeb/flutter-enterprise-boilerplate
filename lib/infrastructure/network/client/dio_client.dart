@@ -10,25 +10,33 @@ import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/int
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/interceptors/retry_interceptor.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/api_response.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/response/response_converter.dart';
+import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 @singleton
 class DioClient {
+
+  DioClient(
+    this._appConfig,
+    this._deviceInfoPlugin,
+    @Named('secure_storage') this._secureStorage,
+    this._cacheManager,
+    this._logger,
+  ) {
+    _dio = _createDio();
+    _addInterceptors();
+  }
+
   final LoggerService _logger;
   late final Dio _dio;
   final AppConfig _appConfig;
   final DeviceInfoPlugin _deviceInfoPlugin;
-  final SecureStorage _secureStorage;
+  final LocalStorage _secureStorage;
   final CacheManager _cacheManager;
 
   Dio get dio => _dio;
-
-  DioClient(this._appConfig, this._deviceInfoPlugin, this._secureStorage, this._cacheManager, this._logger) {
-    _dio = _createDio();
-    _addInterceptors();
-  }
 
   Dio _createDio() {
     return Dio(

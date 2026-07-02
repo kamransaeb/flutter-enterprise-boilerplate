@@ -1,7 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:flutter_enterprise_boilerplate/core/errors/failures.dart';
+// import 'package:infinite_scroll_pagination/.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/widgets/common/app_button.dart';
@@ -21,8 +22,8 @@ class ProductsPage extends StatefulWidget {
 }
 
 class _ProductsPageState extends State<ProductsPage> {
-  final PagingController<int, Product> _pagingController =
-      PagingController(firstPageKey: 1);
+  static const _pageSize = 20;
+  // late final PagingController<int, Product> _pagingController;
   final TextEditingController _searchController = TextEditingController();
   late ProductsBloc _productsBloc;
 
@@ -30,25 +31,70 @@ class _ProductsPageState extends State<ProductsPage> {
   void initState() {
     super.initState();
     _productsBloc = context.read<ProductsBloc>();
-    _pagingController.addPageRequestListener((pageKey) {
-      _productsBloc.add(ProductsEvent.fetchProducts(
-        page: pageKey,
-        searchQuery: _searchController.text,
-      ));
-    });
-    
+    // _pagingController = PagingController<int, Product>(
+    //   getNextPageKey: (state) {
+    //     final lastPage = state.pages?.lastOrNull;
+    //     if (lastPage != null && lastPage.length < _pageSize) {
+    //       return null;
+    //     }
+    //     if (state.lastPageIsEmpty) {
+    //       return null;
+    //     }
+    //     return state.nextIntPageKey;
+    //   },
+    //   fetchPage: _fetchPage,
+    // );
     _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
-    _pagingController.dispose();
+    // _pagingController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
+  Future<List<Product>> _fetchPage(int pageKey) async {
+    final query = _searchController.text.trim();
+
+    if (query.isNotEmpty) {
+      // search is single-page
+      if (pageKey > 1) {
+        return [];
+      }
+      _productsBloc.add(ProductsEvent.searchProducts(query));
+    } else {
+      _productsBloc.add(ProductsEvent.fetchProducts(page: pageKey));
+    }
+
+    final blocState = await _productsBloc.stream.firstWhere(
+      (state) => state.maybeWhen(
+        loaded: (_, __, ___) => true,
+        error: (_) => true,
+        orElse: () => false,
+      ),
+    );
+
+    return blocState.maybeWhen(
+      loaded: (products, _, __) => products,
+      error: (failure) => throw Exception(failure.message),
+      orElse: () => throw StateError('Unexpected products state'),
+    );
+  }
+
   void _onSearchChanged() {
-    _pagingController.refresh();
+    setState(() {});
+    // _pagingController.refresh();
+  }
+
+  String _errorMessage(Object? error) {
+    if (error is Failure) {
+      return error.message;
+    }
+    if (error is Exception) {
+      return error.toString().replaceFirst('Exception: ', '');
+    }
+    return 'Something went wrong';
   }
 
   @override
@@ -61,15 +107,11 @@ class _ProductsPageState extends State<ProductsPage> {
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilters,
           ),
-          IconButton(
-            icon: const Icon(Icons.sort),
-            onPressed: _showSortOptions,
-          ),
+          IconButton(icon: const Icon(Icons.sort), onPressed: _showSortOptions),
         ],
       ),
       body: Column(
         children: [
-          // Search bar
           Padding(
             padding: const EdgeInsets.all(16),
             child: AppTextField(
@@ -79,82 +121,62 @@ class _ProductsPageState extends State<ProductsPage> {
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                      },
+                      onPressed: _searchController.clear,
                     )
                   : null,
             ),
           ),
-          // Product list
-          Expanded(
-            child: BlocConsumer<ProductsBloc, ProductsState>(
-              listener: (context, state) {
-                state.maybeWhen(
-                  loaded: (products, hasMore, page) {
-                    if (!hasMore) {
-                      _pagingController.appendLastPage(products);
-                    } else {
-                      _pagingController.appendPage(products, page + 1);
-                    }
-                  },
-                  error: (failure) {
-                    _pagingController.error = failure;
-                  },
-                  orElse: () {},
-                );
-              },
-              builder: (context, state) {
-                return state.maybeWhen(
-                  loading: () => const Center(
-                    child: LoadingIndicator(),
-                  ),
-                  error: (failure) => ErrorView.generic(
-                    message: failure.message,
-                    onRetry: () => _pagingController.refresh(),
-                  ),
-                  orElse: () => RefreshIndicator(
-                    onRefresh: () async {
-                      _pagingController.refresh();
-                    },
-                    child: PagedListView<int, Product>.separated(
-                      pagingController: _pagingController,
-                      builderDelegate: PagedChildBuilderDelegate<Product>(
-                        itemBuilder: (context, product, index) => ProductCard(
-                          product: product,
-                          onTap: () {
-                            context.router.push(
-                              ProductDetailsRoute(id: product.id),
-                            );
-                          },
-                          onAddToCart: () {
-                            _addToCart(product);
-                          },
-                          onFavorite: () {
-                            _toggleFavorite(product);
-                          },
-                        ),
-                        firstPageProgressIndicatorBuilder: (_) =>
-                            const LoadingIndicator(),
-                        newPageProgressIndicatorBuilder: (_) =>
-                            const LoadingIndicator(),
-                        noItemsFoundIndicatorBuilder: (_) =>
-                            const ErrorView.empty(
-                          message: 'No products found',
-                        ),
-                        noMoreItemsIndicatorBuilder: (_) => const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('No more products'),
-                        ),
-                      ),
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+
+
+
+          // Expanded(
+          //   child: RefreshIndicator(
+          //     onRefresh: () async => _pagingController.refresh(),
+          //     child: PagingListener(
+          //       controller: _pagingController,
+          //       builder: (context, state, fetchNextPage) =>
+          //           PagedListView<int, Product>.separated(
+          //         state: state,
+          //         fetchNextPage: fetchNextPage,
+          //         builderDelegate: PagedChildBuilderDelegate<Product>(
+          //           itemBuilder: (context, product, index) => ProductCard(
+          //             product: product,
+          //             onTap: () {
+          //               context.router.push(
+          //                 ProductDetailsRoute(id: product.id),
+          //               );
+          //             },
+          //             onAddToCart: () => _addToCart(product),
+          //             onFavorite: () => _toggleWishlist(product),
+          //           ),
+          //           firstPageProgressIndicatorBuilder: (_) =>
+          //               const LoadingIndicator(),
+          //           newPageProgressIndicatorBuilder: (_) =>
+          //               const LoadingIndicator(),
+          //           firstPageErrorIndicatorBuilder: (_) => ErrorView.generic(
+          //             message: _errorMessage(state.error),
+          //             onRetry: _pagingController.fetchNextPage,
+          //           ),
+          //           newPageErrorIndicatorBuilder: (_) => ErrorView.generic(
+          //             message: _errorMessage(state.error),
+          //             onRetry: _pagingController.fetchNextPage,
+          //           ),
+          //           noItemsFoundIndicatorBuilder: (_) => ErrorView.empty(
+          //             message: 'No products found',
+          //           ),
+          //           noMoreItemsIndicatorBuilder: (_) => const Padding(
+          //             padding: EdgeInsets.all(16),
+          //             child: Text('No more products'),
+          //           ),
+          //         ),
+          //         separatorBuilder: (_, __) => const SizedBox(height: 12),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+
+
+
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -183,18 +205,19 @@ class _ProductsPageState extends State<ProductsPage> {
 
   void _addToCart(Product product) {
     // Implement add to cart logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${product.name} added to cart'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${product.name} added to cart')));
   }
 
-  void _toggleFavorite(Product product) {
-    // Implement favorite toggle logic
-    _productsBloc.add(
-      ProductsEvent.toggleFavorite(productId: product.id),
-    );
+  void _toggleWishlist(Product product) {
+    _productsBloc.add(ProductsEvent.toggleWishlist(product.id));
+    // _pagingController.mapItems((item) {
+    //   if (item.id == product.id) {
+    //     return item.copyWith(isFavorite: !item.isFavorite);
+    //   }
+    //   return item;
+    // });
   }
 }
 
@@ -224,18 +247,18 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          
+
           // Price range
-          const Text('Price Range', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text(
+            'Price Range',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
           RangeSlider(
             values: RangeValues(_minPrice, _maxPrice),
             min: 0,
             max: 5000,
             divisions: 50,
-            labels: RangeLabels(
-              '\$$_minPrice',
-              '\$$_maxPrice',
-            ),
+            labels: RangeLabels('\$$_minPrice', '\$$_maxPrice'),
             onChanged: (values) {
               setState(() {
                 _minPrice = values.start;
@@ -243,30 +266,35 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               });
             },
           ),
-          
+
           // Categories
           const SizedBox(height: 16),
-          const Text('Categories', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text(
+            'Categories',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: ['Electronics', 'Clothing', 'Home', 'Books', 'Sports']
-                .map((category) => FilterChip(
-                      label: Text(category),
-                      selected: _selectedCategories.contains(category),
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedCategories.add(category);
-                          } else {
-                            _selectedCategories.remove(category);
-                          }
-                        });
-                      },
-                    ))
+                .map(
+                  (category) => FilterChip(
+                    label: Text(category),
+                    selected: _selectedCategories.contains(category),
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedCategories.add(category);
+                        } else {
+                          _selectedCategories.remove(category);
+                        }
+                      });
+                    },
+                  ),
+                )
                 .toList(),
           ),
-          
+
           // In stock only
           const SizedBox(height: 16),
           Row(
@@ -282,7 +310,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               const Text('In stock only'),
             ],
           ),
-          
+
           // Buttons
           const SizedBox(height: 24),
           Row(
@@ -336,22 +364,26 @@ class SortBottomSheet extends StatelessWidget {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          
+
           ...[
-            ('Price: Low to High', Icons.arrow_upward),
-            ('Price: High to Low', Icons.arrow_downward),
-            ('Newest First', Icons.new_releases),
-            ('Best Selling', Icons.star),
-            ('Customer Rating', Icons.thumb_up),
-          ].map((option) => ListTile(
-            leading: Icon(option.$2),
-            title: Text(option.$1),
-            onTap: () {
-              Navigator.pop(context);
-              // Apply sort
-            },
-          )).toList(),
-          
+                ('Price: Low to High', Icons.arrow_upward),
+                ('Price: High to Low', Icons.arrow_downward),
+                ('Newest First', Icons.new_releases),
+                ('Best Selling', Icons.star),
+                ('Customer Rating', Icons.thumb_up),
+              ]
+              .map(
+                (option) => ListTile(
+                  leading: Icon(option.$2),
+                  title: Text(option.$1),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Apply sort
+                  },
+                ),
+              )
+              .toList(),
+
           const SizedBox(height: 16),
         ],
       ),

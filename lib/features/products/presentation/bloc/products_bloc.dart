@@ -7,7 +7,7 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/usecases/get_products_usecase.dart';
-import '../../domain/usecases/toggle_favorite_usecase.dart';
+import '../../domain/usecases/toggle_wishlist_usecase.dart';
 
 part 'products_bloc.freezed.dart';
 part 'products_event.dart';
@@ -17,16 +17,16 @@ part 'product_state.dart';
 class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
   final GetProductsUseCase _getProductsUseCase;
   final SearchProductsUseCase _searchProductsUseCase;
-  final ToggleFavoriteUseCase _toggleFavoriteUseCase;
+  final ToggleWishlistUseCase _toggleWishlistUseCase;
 
   ProductsBloc(
     this._getProductsUseCase,
     this._searchProductsUseCase,
-    this._toggleFavoriteUseCase,
+    this._toggleWishlistUseCase,
   ) : super(const ProductsState.initial()) {
     on<_FetchProducts>(_onFetchProducts);
     on<_SearchProducts>(_onSearchProducts);
-    on<_ToggleFavorite>(_onToggleFavorite);
+    on<_ToggleWishlist>(_onToggleWishlist);
     on<_LoadMoreProducts>(_onLoadMoreProducts);
     on<_RefreshProducts>(_onRefreshProducts);
     on<_ApplyFilter>(_onApplyFilter);
@@ -82,12 +82,12 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
     );
   }
 
-  Future<void> _onToggleFavorite(
-    _ToggleFavorite event,
+  Future<void> _onToggleWishlist(
+    _ToggleWishlist event,
     Emitter<ProductsState> emit,
   ) async {
-    final result = await _toggleFavoriteUseCase.execute(
-      ToggleFavoriteParams(productId: event.productId),
+    final result = await _toggleWishlistUseCase.execute(
+      ToggleWishlistParams(productId: event.productId),
     );
 
     result.fold(

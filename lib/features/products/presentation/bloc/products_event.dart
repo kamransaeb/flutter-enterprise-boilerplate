@@ -9,7 +9,7 @@ abstract class ProductsEvent with _$ProductsEvent {
 
   const factory ProductsEvent.searchProducts(String query) = _SearchProducts;
 
-  const factory ProductsEvent.toggleFavorite(String productId) = _ToggleFavorite;
+  const factory ProductsEvent.toggleWishlist(String productId) = _ToggleWishlist;
 
   const factory ProductsEvent.loadMoreProducts() = _LoadMoreProducts;
 

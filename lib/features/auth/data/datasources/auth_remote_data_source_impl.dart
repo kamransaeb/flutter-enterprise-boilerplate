@@ -1,3 +1,4 @@
+import 'package:flutter_enterprise_boilerplate/features/auth/data/api/auth_api_client.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/data/models/change_password_request_model.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/data/models/forget_password_request_model.dart';
@@ -27,15 +28,15 @@ import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart
 @LazySingleton(as: AuthRemoteDataSource)
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final LoggerService _logger;
-  final ApiClient _apiClient;
-  AuthRemoteDataSourceImpl(this._apiClient, this._logger);
+  final AuthApiClient _authApiClient;
+  AuthRemoteDataSourceImpl(this._authApiClient, this._logger);
 
   @override
   Future<ApiResponse<LoginResponseModel>> login({
     required LoginRequestModel loginRequestModel,
   }) async {
     try {
-      final HttpResponse<LoginResponseModel> httpResponse = await _apiClient
+      final HttpResponse<LoginResponseModel> httpResponse = await _authApiClient
           .login(loginRequestModel: loginRequestModel);
 
       // Simple conversion (if API returns data directly)
@@ -68,8 +69,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required ChangePasswordRequestModel changePasswordRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.changePassword(
-        token: token,
+      final httpResponse = await _authApiClient.changePassword(
         changePasswordRequestModel: changePasswordRequestModel,
       );
       final apiResponse = ResponseConverter.toApiResponse<void>(
@@ -99,7 +99,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required ForgotPasswordRequestModel forgotPasswordRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.forgotPassword(
+      final httpResponse = await _authApiClient.forgotPassword(
         forgotPasswordRequestModel: forgotPasswordRequestModel,
       );
       final apiResponse = ResponseConverter.toApiResponse<void>(
@@ -127,7 +127,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<ApiResponse<void>> logout() async {
     try {
-      final httpResponse = await _apiClient.logout(authorization: '');
+      final httpResponse = await _authApiClient.logout();
       final apiResponse = ResponseConverter.toApiResponse<void>(
         httpResponse.response,
         (_) {},
@@ -155,7 +155,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required TokenRefreshRequestModel refreshTokenRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.refreshToken(
+      final httpResponse = await _authApiClient.refreshToken(
         refreshTokenRequestModel: refreshTokenRequestModel,
       );
       final apiResponse =
@@ -188,7 +188,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required RegisterRequestModel registerRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.register(
+      final httpResponse = await _authApiClient.register(
         registerRequestModel: registerRequestModel,
       );
       final apiResponse =
@@ -221,7 +221,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required ResetPasswordRequestModel resetPasswordRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.resetPassword(
+      final httpResponse = await _authApiClient.resetPassword(
         resetPasswordRequestModel: resetPasswordRequestModel,
       );
       final apiResponse = ResponseConverter.toApiResponse<void>(
@@ -251,7 +251,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required SocialLoginRequestModel socialLoginRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.socialLogin(
+      final httpResponse = await _authApiClient.socialLogin(
         socialLoginRequestModel: socialLoginRequestModel,
       );
       final apiResponse =
@@ -283,7 +283,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required VerifyEmailRequestModel verifyEmailRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.verifyEmail(
+      final httpResponse = await _authApiClient.verifyEmail(
         verifyEmailRequestModel: verifyEmailRequestModel,
       );
       final apiResponse = ResponseConverter.toApiResponse<void>(
@@ -313,7 +313,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required ResendVerificationEmailRequestModel resendVerificationEmailRequestModel,
   }) async {
     try {
-      final httpResponse = await _apiClient.resendVerificationEmail(
+      final httpResponse = await _authApiClient.resendVerificationEmail(
         resendVerificationEmailRequestModel: resendVerificationEmailRequestModel,
       );
       final apiResponse = ResponseConverter.toApiResponse<void>(

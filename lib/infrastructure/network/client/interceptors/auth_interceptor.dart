@@ -72,11 +72,12 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/network/client/interceptors/queued_interceptor_callback.dart';
+import 'package:flutter_enterprise_boilerplate/infrastructure/storage/local_storage.dart';
 import 'package:flutter_enterprise_boilerplate/infrastructure/storage/secure_storage.dart';
 import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 class AuthInterceptor extends Interceptor {
-  final SecureStorage _secureStorage;
+  final LocalStorage _secureStorage;
   final LoggerService _logger;
   String? _accessToken;
   String? _refreshToken;
@@ -84,7 +85,7 @@ class AuthInterceptor extends Interceptor {
   final List<QueuedInterceptorCallback> _pendingRequests = [];
 
   AuthInterceptor({
-    required SecureStorage secureStorage,
+    required LocalStorage secureStorage,
     required LoggerService logger,
   })  : _secureStorage = secureStorage,
         _logger = logger {

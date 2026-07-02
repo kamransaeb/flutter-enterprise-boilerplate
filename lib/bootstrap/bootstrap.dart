@@ -10,6 +10,7 @@ import 'package:injectable/injectable.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import '../app/app.dart';
 import '../app/app_config.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class Bootstrap {
   Bootstrap._();
@@ -19,6 +20,10 @@ class Bootstrap {
     required String envPath,
   }) async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Initialize localization
+    await EasyLocalization.ensureInitialized();
+
 
     // Initialize environment variables
     await dotenv.load(fileName: envPath);

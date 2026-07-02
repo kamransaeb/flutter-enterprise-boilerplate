@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_enterprise_boilerplate/core/widgets/common/app_button.dart';
 
-import '../../../core/widgets/common/app_button.dart';
 import '../../domain/entities/product.dart';
 
 class ProductCard extends StatelessWidget {
@@ -108,11 +108,11 @@ class ProductCard extends StatelessWidget {
               ),
               
               // Product category
-              if (product.category != null)
+              if (product.categories.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    product.category!,
+                    product.categories.join(', '),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,

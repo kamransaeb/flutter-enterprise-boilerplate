@@ -1,4 +1,14 @@
 #!/bin/bash
+# Command	What it does
+# all (default)
+# clean → full build_runner → analyze → format
+# watch
+# build_runner watch
+# clean
+# Deletes all *.g.dart, *.freezed.dart, *.gr.dart, *.config.dart
+# freezed / json / injectable / retrofit / auto_route
+# Per-generator runs
+# icons / splash / assets / mocks
 
 # What each part means:
 # fvm dart run build_runner --help
@@ -189,17 +199,17 @@ generate_splash() {
     fi
 }
 
-# Generate localization files
-generate_localization() {
-    print_step "Generating localization files..."
+# # Generate localization files
+# generate_localization() {
+#     print_step "Generating localization files..."
     
-    if [ -f "l10n.yaml" ]; then
-        fvm flutter gen-l10n
-        print_success "Localization files generated"
-    else
-        print_error "l10n.yaml not found"
-    fi
-}
+#     if [ -f "l10n.yaml" ]; then
+#         fvm flutter gen-l10n
+#         print_success "Localization files generated"
+#     else
+#         print_error "l10n.yaml not found"
+#     fi
+# }
 
 # Generate asset constants
 generate_assets() {
@@ -249,7 +259,7 @@ require_dart_command() {
     local package_cmd="$1"
     local package_name="$2"
 
-    if ! fvm dart run "package_cmd" --help >/dev/null 2>&1; then
+    if ! fvm dart run "$package_cmd" --help >/dev/null 2>&1; then
         print_error "$package_name is not available. Add it to pubspec.yaml and run 'fvm flutter pub get'."
         exit 1
     fi
@@ -296,9 +306,6 @@ main() {
         splash)
             generate_splash
             ;;
-        l10n)
-            generate_localization
-            ;;
         assets)
             generate_assets
             ;;
@@ -306,7 +313,7 @@ main() {
             generate_mocks
             ;;
         *)
-            echo "Usage: $0 {clean|freezed|json|injectable|retrofit|auto_route|all|watch|icons|splash|l10n|assets|mocks}"
+            echo "Usage: $0 {clean|freezed|json|injectable|retrofit|auto_route|all|watch|icons|splash|assets|mocks}"
             exit 1
             ;;
     esac

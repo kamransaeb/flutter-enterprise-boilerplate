@@ -10,7 +10,8 @@ class AppLifecycleListener extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<AppLifecycleBloc, AppLifecycleState>(
       listenWhen: (previous, current) => 
-          previous.status != current.status,
+          previous.isBackground != current.isBackground ||
+          previous.isResumed != current.isResumed,
       listener: (context, state) {
         if (state.isBackground) {
           // App went to background - pause timers, etc.

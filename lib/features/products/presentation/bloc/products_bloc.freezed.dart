@@ -55,12 +55,12 @@ extension ProductsEventPatterns on ProductsEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int page,  ProductFilter? filter)?  fetchProducts,TResult Function( String query)?  searchProducts,TResult Function( String productId)?  toggleFavorite,TResult Function()?  loadMoreProducts,TResult Function()?  refreshProducts,TResult Function( ProductFilter filter)?  applyFilter,TResult Function()?  clearFilter,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int page,  ProductFilter? filter)?  fetchProducts,TResult Function( String query)?  searchProducts,TResult Function( String productId)?  toggleWishlist,TResult Function()?  loadMoreProducts,TResult Function()?  refreshProducts,TResult Function( ProductFilter filter)?  applyFilter,TResult Function()?  clearFilter,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FetchProducts() when fetchProducts != null:
 return fetchProducts(_that.page,_that.filter);case _SearchProducts() when searchProducts != null:
-return searchProducts(_that.query);case _ToggleFavorite() when toggleFavorite != null:
-return toggleFavorite(_that.productId);case _LoadMoreProducts() when loadMoreProducts != null:
+return searchProducts(_that.query);case _ToggleWishlist() when toggleWishlist != null:
+return toggleWishlist(_that.productId);case _LoadMoreProducts() when loadMoreProducts != null:
 return loadMoreProducts();case _RefreshProducts() when refreshProducts != null:
 return refreshProducts();case _ApplyFilter() when applyFilter != null:
 return applyFilter(_that.filter);case _ClearFilter() when clearFilter != null:
@@ -82,12 +82,12 @@ return clearFilter();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int page,  ProductFilter? filter)  fetchProducts,required TResult Function( String query)  searchProducts,required TResult Function( String productId)  toggleFavorite,required TResult Function()  loadMoreProducts,required TResult Function()  refreshProducts,required TResult Function( ProductFilter filter)  applyFilter,required TResult Function()  clearFilter,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int page,  ProductFilter? filter)  fetchProducts,required TResult Function( String query)  searchProducts,required TResult Function( String productId)  toggleWishlist,required TResult Function()  loadMoreProducts,required TResult Function()  refreshProducts,required TResult Function( ProductFilter filter)  applyFilter,required TResult Function()  clearFilter,}) {final _that = this;
 switch (_that) {
 case _FetchProducts():
 return fetchProducts(_that.page,_that.filter);case _SearchProducts():
-return searchProducts(_that.query);case _ToggleFavorite():
-return toggleFavorite(_that.productId);case _LoadMoreProducts():
+return searchProducts(_that.query);case _ToggleWishlist():
+return toggleWishlist(_that.productId);case _LoadMoreProducts():
 return loadMoreProducts();case _RefreshProducts():
 return refreshProducts();case _ApplyFilter():
 return applyFilter(_that.filter);case _ClearFilter():
@@ -108,12 +108,12 @@ return clearFilter();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int page,  ProductFilter? filter)?  fetchProducts,TResult? Function( String query)?  searchProducts,TResult? Function( String productId)?  toggleFavorite,TResult? Function()?  loadMoreProducts,TResult? Function()?  refreshProducts,TResult? Function( ProductFilter filter)?  applyFilter,TResult? Function()?  clearFilter,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int page,  ProductFilter? filter)?  fetchProducts,TResult? Function( String query)?  searchProducts,TResult? Function( String productId)?  toggleWishlist,TResult? Function()?  loadMoreProducts,TResult? Function()?  refreshProducts,TResult? Function( ProductFilter filter)?  applyFilter,TResult? Function()?  clearFilter,}) {final _that = this;
 switch (_that) {
 case _FetchProducts() when fetchProducts != null:
 return fetchProducts(_that.page,_that.filter);case _SearchProducts() when searchProducts != null:
-return searchProducts(_that.query);case _ToggleFavorite() when toggleFavorite != null:
-return toggleFavorite(_that.productId);case _LoadMoreProducts() when loadMoreProducts != null:
+return searchProducts(_that.query);case _ToggleWishlist() when toggleWishlist != null:
+return toggleWishlist(_that.productId);case _LoadMoreProducts() when loadMoreProducts != null:
 return loadMoreProducts();case _RefreshProducts() when refreshProducts != null:
 return refreshProducts();case _ApplyFilter() when applyFilter != null:
 return applyFilter(_that.filter);case _ClearFilter() when clearFilter != null:
@@ -274,8 +274,8 @@ as String,
 /// @nodoc
 
 
-class _ToggleFavorite implements ProductsEvent {
-  const _ToggleFavorite(this.productId);
+class _ToggleWishlist implements ProductsEvent {
+  const _ToggleWishlist(this.productId);
   
 
  final  String productId;
@@ -284,13 +284,13 @@ class _ToggleFavorite implements ProductsEvent {
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$ToggleFavoriteCopyWith<_ToggleFavorite> get copyWith => __$ToggleFavoriteCopyWithImpl<_ToggleFavorite>(this, _$identity);
+_$ToggleWishlistCopyWith<_ToggleWishlist> get copyWith => __$ToggleWishlistCopyWithImpl<_ToggleWishlist>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ToggleFavorite&&(identical(other.productId, productId) || other.productId == productId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ToggleWishlist&&(identical(other.productId, productId) || other.productId == productId));
 }
 
 
@@ -299,15 +299,15 @@ int get hashCode => Object.hash(runtimeType,productId);
 
 @override
 String toString() {
-  return 'ProductsEvent.toggleFavorite(productId: $productId)';
+  return 'ProductsEvent.toggleWishlist(productId: $productId)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$ToggleFavoriteCopyWith<$Res> implements $ProductsEventCopyWith<$Res> {
-  factory _$ToggleFavoriteCopyWith(_ToggleFavorite value, $Res Function(_ToggleFavorite) _then) = __$ToggleFavoriteCopyWithImpl;
+abstract mixin class _$ToggleWishlistCopyWith<$Res> implements $ProductsEventCopyWith<$Res> {
+  factory _$ToggleWishlistCopyWith(_ToggleWishlist value, $Res Function(_ToggleWishlist) _then) = __$ToggleWishlistCopyWithImpl;
 @useResult
 $Res call({
  String productId
@@ -318,17 +318,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$ToggleFavoriteCopyWithImpl<$Res>
-    implements _$ToggleFavoriteCopyWith<$Res> {
-  __$ToggleFavoriteCopyWithImpl(this._self, this._then);
+class __$ToggleWishlistCopyWithImpl<$Res>
+    implements _$ToggleWishlistCopyWith<$Res> {
+  __$ToggleWishlistCopyWithImpl(this._self, this._then);
 
-  final _ToggleFavorite _self;
-  final $Res Function(_ToggleFavorite) _then;
+  final _ToggleWishlist _self;
+  final $Res Function(_ToggleWishlist) _then;
 
 /// Create a copy of ProductsEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? productId = null,}) {
-  return _then(_ToggleFavorite(
+  return _then(_ToggleWishlist(
 null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String,
   ));

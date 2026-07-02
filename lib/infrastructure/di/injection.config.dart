@@ -76,8 +76,8 @@ import '../../features/products/domain/usecases/get_products_usecase.dart'
     as _i15;
 import '../../features/products/domain/usecases/search_product_usecase.dart'
     as _i343;
-import '../../features/products/domain/usecases/toggle_favorite_usecase.dart'
-    as _i270;
+import '../../features/products/domain/usecases/toggle_wishlist_usecase.dart'
+    as _i298;
 import '../../features/products/presentation/bloc/products_bloc.dart' as _i975;
 import '../../features/user/data/api/user_api_client.dart' as _i240;
 import '../cache/cache_manager.dart' as _i326;
@@ -168,6 +168,13 @@ Future<_i174.GetIt> $initGetIt(
   gh.singleton<_i47.ConnectivityService>(
     () => _i47.ConnectivityService(gh<_i903.LoggerService>()),
   );
+  gh.singleton<_i619.SecureStorage>(
+    () => storageModule.secureStorageImpl(
+      gh<_i558.FlutterSecureStorage>(),
+      gh<_i861.AppConfig>(),
+      gh<_i903.LoggerService>(),
+    ),
+  );
   gh.singleton<_i343.SentryService>(
     () => _i343.SentryService(
       gh<_i488.EnvironmentService>(),
@@ -193,14 +200,6 @@ Future<_i174.GetIt> $initGetIt(
       gh<_i161.InternetConnection>(),
       gh<_i903.LoggerService>(),
     ),
-  );
-  gh.singleton<_i329.LocalStorage>(
-    () => storageModule.secureStorage(
-      gh<_i558.FlutterSecureStorage>(),
-      gh<_i861.AppConfig>(),
-      gh<_i903.LoggerService>(),
-    ),
-    instanceName: 'secure_storage',
   );
   gh.singleton<_i329.LocalStorage>(
     () => storageModule.hiveStorage(
@@ -248,6 +247,10 @@ Future<_i174.GetIt> $initGetIt(
       gh<_i326.CacheManager>(),
       gh<_i903.LoggerService>(),
     ),
+  );
+  gh.singleton<_i329.LocalStorage>(
+    () => storageModule.secureStorage(gh<_i619.SecureStorage>()),
+    instanceName: 'secure_storage',
   );
   gh.singleton<_i541.AuthApiClient>(
     () => _i541.AuthApiClient(gh<_i870.DioClient>()),
@@ -346,15 +349,8 @@ Future<_i174.GetIt> $initGetIt(
   gh.factory<_i343.SearchProductsUseCase>(
     () => _i343.SearchProductsUseCase(gh<_i963.ProductRepository>()),
   );
-  gh.factory<_i270.ToggleFavoriteUseCase>(
-    () => _i270.ToggleFavoriteUseCase(gh<_i963.ProductRepository>()),
-  );
-  gh.factory<_i975.ProductsBloc>(
-    () => _i975.ProductsBloc(
-      gh<_i15.GetProductsUseCase>(),
-      gh<_i343.SearchProductsUseCase>(),
-      gh<_i270.ToggleFavoriteUseCase>(),
-    ),
+  gh.factory<_i298.ToggleWishlistUseCase>(
+    () => _i298.ToggleWishlistUseCase(gh<_i963.ProductRepository>()),
   );
   gh.singleton<_i797.AuthBloc>(
     () => _i797.AuthBloc(
@@ -363,6 +359,13 @@ Future<_i174.GetIt> $initGetIt(
       registerUseCase: gh<_i941.RegisterUseCase>(),
       authRepository: gh<_i787.AuthRepository>(),
       logger: gh<_i903.LoggerService>(),
+    ),
+  );
+  gh.factory<_i975.ProductsBloc>(
+    () => _i975.ProductsBloc(
+      gh<_i15.GetProductsUseCase>(),
+      gh<_i343.SearchProductsUseCase>(),
+      gh<_i298.ToggleWishlistUseCase>(),
     ),
   );
   return getIt;

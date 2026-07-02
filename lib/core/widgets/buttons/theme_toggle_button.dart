@@ -12,7 +12,7 @@ class ThemeToggleButton extends StatelessWidget {
         return IconButton(
           icon: Icon(state.currentThemeStatus.icon),
           onPressed: () {
-            context.read<ThemeBloc>().add(ThemeToggleRequested());
+            context.read<ThemeBloc>().add(ThemeEvent.toggleRequested());
           },
         );
       },

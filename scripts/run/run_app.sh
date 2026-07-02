@@ -1,5 +1,17 @@
 #!/bin/bash
+
 # Run the app
+# use this daily
+# run_app.sh is the best script in the repo:
+# Validates project root, flavor, target, env file
+# Maps flavor → lib/main_{flavor}.dart + .env.{flavor}
+# Runs fvm flutter pub get
+# Optional -c (build_runner), -p (pod install)
+# Runs fvm flutter run --flavor … -t …
+# Examples:
+# ./scripts/run/run_app.sh -f dev -c -d chrome   # recommended first run
+# ./scripts/run/run_app.sh -l                    # list devices
+
 
 set -e  # Exit on error
 set -u  # Exit on undefined variable (prevents typos like $APPL_TEAM_ID)
