@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter_enterprise_boilerplate/core/errors/error_handler.dart';
 import 'package:flutter_enterprise_boilerplate/core/errors/failures.dart';
+import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 import 'package:flutter_enterprise_boilerplate/core/usecase/base_usecase.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/entities/user.dart';
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/repositories/auth_repository.dart';
@@ -13,22 +13,24 @@ import 'package:flutter_enterprise_boilerplate/features/auth/domain/value_object
 import 'package:flutter_enterprise_boilerplate/features/auth/domain/value_objects/register_params.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter_enterprise_boilerplate/core/services/logger_service.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 part 'auth_bloc.freezed.dart';
 
+/// The AuthBloc is responsible for handling the authentication state and events.
 @singleton
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  /// The LoginUseCase is used to login a user.
   final LoginUseCase _loginUseCase;
+  /// The LogoutUseCase is used to logout a user.
   final LogoutUseCase _logoutUseCase;
+  /// The RegisterUseCase is used to register a user.
   final RegisterUseCase _registerUseCase;
+  /// The AuthRepository is used to interact with the authentication repository.
   final AuthRepository _authRepository;
+  /// The LoggerService is used to log messages.
   final LoggerService _logger;
-
-  Timer? _tokenRefreshTimer;
-  static const _tokenRefreshInterval = Duration(minutes: 45);
 
   AuthBloc({
     required LoginUseCase loginUseCase,

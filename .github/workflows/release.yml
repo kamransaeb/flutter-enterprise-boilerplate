@@ -12,8 +12,8 @@ env:
   FLUTTER_VERSION: '3.x'
 
 jobs:
-  build-release-artifacts:
-    name: Build Release Artifacts
+  build-android-release:
+    name: Build Android Release
     runs-on: ubuntu-latest
 
     steps:
@@ -24,21 +24,15 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
 
-      - run: chmod +x ./scripts/ci/setup_environment.sh ./scripts/ci/prepare_build.sh ./scripts/build/build_android.sh ./scripts/build/build_web.sh ./scripts/build/_common.sh
+      - run: chmod +x ./scripts/ci/setup_environment.sh ./scripts/ci/prepare_build.sh ./scripts/build/build_android.sh ./scripts/build/_common.sh
       - run: ./scripts/ci/setup_environment.sh
       - run: ./scripts/ci/prepare_build.sh --codegen --skip-tests
       - run: ./scripts/build/build_android.sh -f prod --skip-analyze --skip-test --bundle-only
-      - run: ./scripts/build/build_web.sh -f prod --skip-analyze --skip-test --skip-clean
 
       - uses: actions/upload-artifact@v4
         with:
           name: release-android-aab
           path: build/app/outputs/bundle/prodRelease/
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release-web
-          path: build/web/
 
   build-ios-release:
     name: Build iOS Release
@@ -64,7 +58,7 @@ jobs:
   publish-github-release:
     name: Publish GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-release-artifacts, build-ios-release]
+    needs: [build-android-release, build-ios-release]
     permissions:
       contents: write
 
@@ -76,11 +70,6 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: release-web
-          path: artifacts/web
-
-      - uses: actions/download-artifact@v4
-        with:
           name: release-ios-build
           path: artifacts/ios
 
@@ -88,6 +77,5 @@ jobs:
         with:
           files: |
             artifacts/android/**
-            artifacts/web/**
             artifacts/ios/**
           generate_release_notes: true

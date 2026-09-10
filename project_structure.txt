@@ -1,1200 +1,243 @@
-environment:
-  sdk: ^3.10.3
+Flutter Enterprise Boilerplate — Project Structure
+==================================================
 
-dependencies:
-  flutter:
-    sdk: flutter
+Last updated to match the current repository layout (scripts, workflows, flavors, easy_localization).
 
-  cupertino_icons: ^1.0.8
+ARCHITECTURE
+------------
+Clean Architecture per feature: domain / data / presentation
+State: flutter_bloc + Freezed
+DI: GetIt + Injectable
+Navigation: AutoRoute
+Localization: easy_localization (assets/translations/*.json)
+Tooling: FVM (fvm flutter / fvm dart) + shell scripts in scripts/
 
-  # Core
-  dartz: ^0.10.1
-  equatable: ^2.0.5
-  freezed_annotation: ^3.1.0
-  get_it: ^9.2.0
-  injectable: ^2.7.1+4
-  json_annotation: ^4.9.0
-  
-  # State Management
-  flutter_bloc: ^9.1.1
-  hydrated_bloc: ^10.1.1
-  rxdart: ^0.28.0
-  
-  
-  # Network 
-  dio: ^5.9.0  
-  retrofit: ^4.9.2
-  logger: ^2.6.2
-  synchronized: ^3.1.0
- 
-  # Local Storage
-  shared_preferences: ^2.5.4
-  hive: ^2.2.3
-  path_provider: ^2.1.5
-  hive_flutter: ^1.1.0
-  flutter_secure_storage: ^10.0.0
-  
-  # Firebase
-  firebase_core: ^4.3.0
-  firebase_analytics: ^12.1.0
-  firebase_crashlytics: ^5.0.6
-  firebase_remote_config: ^6.1.3  
-  firebase_messaging: ^16.1.1
-  flutter_local_notifications: ^17.2.3
-  
-  # Monitoring
-  sentry_flutter: ^9.10.0
+FLAVORS
+-------
+| Flavor    | Entry point             | Env file       | Android suffix | iOS scheme |
+|-----------|-------------------------|----------------|----------------|------------|
+| dev       | lib/main_dev.dart       | .env.dev       | .dev           | dev        |
+| staging   | lib/main_staging.dart   | .env.staging   | .staging       | staging    |
+| prod      | lib/main_prod.dart      | .env.prod      | (none)         | prod       |
 
-  flutter_dotenv: ^6.0.0
-  
-  # UI
-  flutter_svg: ^2.2.3
-  cached_network_image: ^3.3.0
-  shimmer: ^3.0.0
-  # check version ***
-  pinput: ^6.0.2
-  dropdown_button2: ^2.3.9
-
-  # Formz
-  formz: ^0.8.0
-  reactive_forms: ^18.2.2
-
-  # Navigation
-  go_router: ^17.0.1
-  auto_route: ^11.0.0
-  
-  # Utils
-  intl: ^0.20.2
-  # Localization
-  easy_localization: ^3.0.3
-  
-  # Performance
-  provider: ^6.1.1
-
-  # Security
-  encrypt: ^5.0.1
-  local_auth: ^2.3.0
-  
-  # Animations
-  lottie: ^2.7.0
-  animations: ^2.0.9
-
-  flutter_localizations:
-    sdk: flutter
-  url_launcher: ^6.2.1
-  package_info_plus: ^9.0.0
-  connectivity_plus: ^7.0.0
-  device_info_plus: ^12.3.0
-  geolocator: ^13.0.2
-  geocoding: ^2.2.0
-  
-  # Very Good Analysis
-  very_good_analysis: ^10.0.0
-
-
- 
-
-
-
-
-
-find me a full production ready very good ventures vgv enterprise pattern approach?
-
-
-
-
-
-
-
-
-
-
-enterprise_app/
-├── android/
-├── ios/
+ROOT
+----
+flutter_enterprise_boilerplate/
+├── android/                          # Android flavor configs (dev/staging/prod)
+├── ios/                              # iOS schemes (dev/staging/prod)
 ├── web/
-├── windows/
 ├── macos/
+├── windows/
 ├── linux/
-├── test/
-├── integration_test/
+├── lib/                              # Application source
+├── test/                             # Unit & widget tests
+├── integration_test/                 # Integration tests
+├── assets/
+├── scripts/                          # Build, run, deploy, CI, quality, tools
+├── .github/                          # GitHub Actions & templates
 ├── analysis_options.yaml
+├── build.yaml                        # build_runner scopes (Freezed, Injectable, Retrofit, AutoRoute)
 ├── pubspec.yaml
+├── pubspec.lock
 ├── pubspec_overrides.yaml
-├── melos.yaml
 ├── firebase.json
 ├── .env.example
-├── .env
-├── .gitignore
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml
-│   │   ├── cd.yml
-│   │   └── codeql-analysis.yml
-│   └── PULL_REQUEST_TEMPLATE.md
-├── assets/
-│   ├── animations/
-│   │   ├── success.json
-│   │   ├── loading.json
-│   │   └── error.json
-│   ├── images/
-│   │   ├── png/
-│   │   ├── svg/
-│   │   └── webp/
-│   ├── icons/
-│   │   ├── home.svg
-│   │   └── profile.svg
-│   ├── fonts/
-│   │   ├── Inter-Regular.ttf
-│   │   ├── Inter-Medium.ttf
-│   │   ├── Inter-SemiBold.ttf
-│   │   └── Inter-Bold.ttf
-│   ├── translations/
-│   │   ├── en.json
-│   │   ├── es.json
-│   │   └── fr.json
-│   └── config/
-│       ├── dev.json
-│       ├── staging.json
-│       └── production.json
-├── scripts/
-│   ├── build_apks.sh
-│   ├── build_ipas.sh
-│   ├── generate_icons.sh
-│   ├── generate_splash.sh
-│   └── code_coverage.sh
-└── lib/
-
-
-
-
-
-
-
-
-
-
-lib/
-├── main.dart                          # Entry point
-├── main_dev.dart                      # Development entry
-├── main_staging.dart                  # Staging entry
-├── main_prod.dart                     # Production entry
-├── app/
-│   ├── app.dart                       # Main App widget
-│   ├── app_config.dart                # Environment config
-│   ├── app_widget.dart                # Root widget with providers
-│   ├── app_bloc_observer.dart         # Global Bloc observer
-│   └── app_initializer.dart           # App initialization sequence
-├── bootstrap/
-│   ├── bootstrap.dart                 # App bootstrap
-│   ├── error_handler.dart             # Global error handling
-│   └── performance_monitor.dart       # Performance monitoring
-
-
-
-
-
-
-
-
-
-lib/core/
-├── constants/
-│   ├── app_constants.dart             # App-wide constants
-│   ├── api_constants.dart             # API endpoints, headers
-│   ├── storage_constants.dart         # Storage keys
-│   ├── regex_constants.dart           # Regex patterns
-│   ├── asset_constants.dart           # Asset paths
-│   ├── route_constants.dart           # Route names
-│   └── duration_constants.dart        # Animation durations
-├── errors/
-│   ├── exceptions/ 
-│   │   ├── api_exceptions.dart
-│   │   ├── app_exception.dart
-│   │   ├── auth_exceptions.dart
-│   │   ├── cache_exceptions.dart
-│   │   ├── device_exceptions.dart
-│   │   ├── database_exceptions.dart
-│   │   ├── file_exceptions.dart
-│   │   ├── payment_exceptions.dart
-│   │   ├── serialization_exceptions.dart
-│   │   ├── third_party_service_exceptions.dart
-│   │   ├── permission_exceptions.dart
-│   │   └── validation_exceptions.dart
-│   ├── exceptions.dart                # Custom exceptions
-│   ├── failures.dart                  # Failure classes (Either pattern)
-│   ├── error_handler.dart             # Error handling logic
-│   └── error_mapper.dart              # Map exceptions to failures
-├── extensions/
-│   ├── context_extensions.dart        # BuildContext helpers
-│   ├── string_extensions.dart         # String utilities
-│   ├── list_extensions.dart           # List utilities
-│   ├── map_extensions.dart            # Map utilities
-│   ├── datetime_extensions.dart       # DateTime utilities
-│   ├── num_extensions.dart            # Number formatting
-│   ├── widget_extensions.dart         # Widget utilities
-│   └── either_extensions.dart         # Either pattern helpers
-├── mixins/
-│   ├── validation_mixin.dart          # Form validation
-│   ├── debounce_mixin.dart            # Debounce functionality
-│   ├── throttle_mixin.dart            # Throttle functionality
-│   ├── logger_mixin.dart              # Logging utilities
-│   └── disposable_mixin.dart          # Clean up resources
-├── themes/
-│   ├── app_theme.dart                 # Theme configuration
-│   ├── color_palette.dart             # Color definitions
-│   ├── text_styles.dart               # Typography
-│   ├── button_styles.dart             # Button themes
-│   ├── input_styles.dart              # TextField themes
-│   ├── card_styles.dart               # Card themes
-│   ├── dialog_styles.dart             # Dialog themes
-│   ├── bottom_sheet_styles.dart       # BottomSheet themes
-│   └── dark_theme.dart                # Dark mode
-├── utils/
-│   ├── validators/                    # Form validators
-│   │   ├── email_validator.dart
-│   │   ├── password_validator.dart
-│   │   ├── phone_validator.dart
-│   │   └── required_validator.dart
-│   ├── formatters/                    # Text formatters
-│   │   ├── currency_formatter.dart
-│   │   ├── date_formatter.dart
-│   │   ├── phone_formatter.dart
-│   │   └── card_formatter.dart
-│   ├── helpers/                       # Utility functions
-│   │   ├── date_helper.dart
-│   │   ├── file_helper.dart
-│   │   ├── network_helper.dart
-│   │   ├── platform_helper.dart
-│   │   ├── device_helper.dart
-│   │   └── permission_helper.dart
-│   ├── debouncer.dart                 # Debounce utility
-│   ├── throttle.dart                  # Throttle utility
-│   ├── logger.dart                    # Custom logger
-│   ├── connectivity.dart              # Network connectivity
-│   ├── platform_check.dart            # Platform detection
-│   ├── device_info.dart               # Device information
-│   ├── local_notifications.dart       # Local notifications
-│   ├── biometrics.dart                # Biometric authentication
-│   ├── encryption.dart                # Encryption utilities
-│   ├── serialization.dart             # JSON serialization helpers
-│   └── debuggable.dart                # Debug utilities
-├── widgets/
-│   ├── common/
-│   │   ├── app_button.dart            # Custom button
-│   │   ├── app_text_field.dart        # Custom text field
-│   │   ├── app_dropdown.dart          # Custom dropdown
-│   │   ├── app_checkbox.dart          # Custom checkbox
-│   │   ├── app_radio.dart             # Custom radio button
-│   │   ├── app_switch.dart            # Custom switch
-│   │   ├── app_card.dart              # Custom card
-│   │   ├── app_chip.dart              # Custom chip
-│   │   ├── app_badge.dart             # Badge widget
-│   │   ├── app_progress.dart          # Progress indicators
-│   │   └── app_snackbar.dart          # Snackbar widget
-│   ├── layout/
-│   │   ├── responsive_layout.dart     # Responsive layout
-│   │   ├── adaptive_layout.dart       # Adaptive layout
-│   │   ├── scroll_column.dart         # Scrollable column
-│   │   ├── scroll_row.dart            # Scrollable row
-│   │   ├── divider.dart               # Custom divider
-│   │   ├── spacer.dart                # Spacer widget
-│   │   └── constraint_box.dart        # Constrained box
-│   ├── feedback/
-│   │   ├── loading_indicator.dart     # Loading widget
-│   │   ├── error_view.dart            # Error display
-│   │   ├── empty_view.dart            # Empty state
-│   │   ├── retry_view.dart            # Retry button
-│   │   └── shimmer_effect.dart        # Shimmer loading
-│   ├── dialogs/
-│   │   ├── app_dialog.dart            # Base dialog
-│   │   ├── confirm_dialog.dart        # Confirmation dialog
-│   │   ├── alert_dialog.dart          # Alert dialog
-│   │   ├── bottom_sheet.dart          # Bottom sheet
-│   │   └── modal_sheet.dart           # Modal sheet
-│   └── animations/
-│       ├── fade_transition.dart       # Fade animation
-│       ├── slide_transition.dart      # Slide animation
-│       ├── scale_transition.dart      # Scale animation
-│       ├── rotation_transition.dart   # Rotation animation
-│       └── custom_transition.dart     # Custom animations
-└── navigation/
-    ├── app_router.dart                # Router configuration
-    ├── route_guard.dart               # Route guards
-    ├── route_names.dart               # Route names
-    ├── route_transitions.dart         # Custom transitions
-    ├── route_observers.dart         # Route Observers
-    ├── route_utils.dart               # Route utils
-    └── navigation_service.dart        # Navigation service
-
-
-
-
-
-
-
-
-lib/infrastructure/
-├── di/                                # Dependency Injection
-│   ├── injection.dart                 # GetIt configuration
-│   ├── injection.config.dart          # Generated config
-│   ├── di_container.dart              # DI container
-│   └── modules/                       # DI modules
-│       ├── network_module.dart        # Network dependencies
-│       ├── network_module.dart        # Network dependencies
-│       ├── storage_module.dart        # Storage dependencies
-│       ├── repository_module.dart     # Repository dependencies
-│       ├── bloc_module.dart           # Bloc dependencies
-│       └── service_module.dart        # Service dependencies
-├── network/                           # Networking layer
-│   ├── client/
-│   │   ├── api_client.dart            # Base API client
-│   │   ├── dio_client.dart            # Dio implementation
-│   │   ├── interceptors/              # Dio interceptors
-│   │   │   ├── auth_interceptor.dart  # Auth interceptor
-│   │   │   ├── logging_interceptor.dart
-│   │   │   ├── error_interceptor.dart
-│   │   │   ├── retry_interceptor.dart
-│   │   │   └── header_interceptor.dart
-│   │   └── response/                  # API response handling
-│   │       ├── api_response.dart
-│   │       ├── error_response.dart
-│   │       └── paginated_response.dart
-│   ├── endpoints/                     # API endpoints
-│   │   ├── auth_endpoints.dart
-│   │   ├── user_endpoints.dart
-│   │   └── product_endpoints.dart
-│   └── transformers/                  # Response transformers
-│       ├── json_transformer.dart
-│       └── date_transformer.dart
-├── storage/                           # Local storage
-│   ├── local_storage.dart             # Storage interface
-│   ├── secure_storage.dart            # Secure storage impl
-│   ├── shared_prefs_storage.dart      # Shared prefs impl
-│   ├── hive_storage.dart              # Hive storage impl
-│   └── cache_manager.dart             # Cache management
-├── services/                          # External services
-│   ├── firebase/
-│   │   ├── firebase_service.dart
-│   │   ├── analytics_service.dart
-│   │   ├── crashlytics_service.dart
-│   │   ├── messaging_service.dart
-│   │   └── remote_config_service.dart
-│   ├── sentry_service.dart            # Sentry service
-│   ├── deep_link_service.dart         # Deep linking
-│   ├── notification_service.dart      # Push notifications
-│   ├── biometric_service.dart         # Biometric auth
-│   ├── location_service.dart          # Location services
-│   └── payment_service.dart           # Payment services
-└── platform/                          # Platform-specific
-    ├── platform_service.dart          # Platform interface
-    ├── android_service.dart           # Android impl
-    ├── ios_service.dart               # iOS impl
-    └── web_service.dart               # Web impl
-
-
-
-
-
-
-
-    lib/features/
-├── splash/                            # Splash screen feature
-│   ├── presentation/
-│   │   ├── pages/
-│   │   │   └── splash_page.dart
-│   │   ├── widgets/
-│   │   │   └── splash_logo.dart
-│   │   └── bloc/
-│   │       ├── splash_bloc.dart
-│   │       ├── splash_event.dart
-│   │       ├── splash_state.dart
-│   │       └── splash_bloc.freezed.dart
-│   └── domain/
-│       └── usecases/
-│           └── check_auth_status.dart
-├── auth/                              # Authentication feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   │   ├── auth_local_data_source.dart
-│   │   │   └── auth_remote_data_source.dart
-│   │   ├── models/
-│   │   │   ├── auth_model.dart
-│   │   │   ├── login_request.dart
-│   │   │   ├── login_response.dart
-│   │   │   └── user_model.dart
-│   │   └── repositories/
-│   │       └── auth_repository_impl.dart
-│   ├── domain/
-│   │   ├── entities/
-│   │   │   ├── user.dart
-│   │   │   └── auth_tokens.dart
-│   │   ├── repositories/
-│   │   │   └── auth_repository.dart
-│   │   └── usecases/
-│   │       ├── login_usecase.dart
-│   │       ├── logout_usecase.dart
-│   │       ├── register_usecase.dart
-│   │       ├── forgot_password_usecase.dart
-│   │       ├── reset_password_usecase.dart
-│   │       ├── verify_email_usecase.dart
-│   │       ├── resend_verification_usecase.dart
-│   │       └── social_login_usecase.dart
-│   └── presentation/
-│       ├── pages/
-│       │   ├── login_page.dart
-│       │   ├── register_page.dart
-│       │   ├── forgot_password_page.dart
-│       │   ├── reset_password_page.dart
-│       │   ├── verify_email_page.dart
-│       │   └── onboarding_page.dart
-│       ├── widgets/
-│       │   ├── login_form.dart
-│       │   ├── register_form.dart
-│       │   ├── social_login_buttons.dart
-│       │   ├── password_field.dart
-│       │   ├── email_field.dart
-│       │   └── terms_checkbox.dart
-│       ├── bloc/
-│       │   ├── auth_bloc.dart
-│       │   ├── auth_event.dart
-│       │   ├── auth_state.dart
-│       │   └── auth_bloc.freezed.dart
-│       ├── cubits/
-│       │   ├── login_form_cubit.dart
-│       │   ├── register_form_cubit.dart
-│       │   └── forgot_password_cubit.dart
-│       └── views/
-│           ├── login_view.dart
-│           ├── register_view.dart
-│           └── forgot_password_view.dart
-├── dashboard/                         # Dashboard feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   ├── models/
-│   │   └── repositories/
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── repositories/
-│   │   └── usecases/
-│   └── presentation/
-│       ├── pages/
-│       │   ├── dashboard_page.dart
-│       │   ├── home_tab.dart
-│       │   ├── search_tab.dart
-│       │   ├── notifications_tab.dart
-│       │   └── profile_tab.dart
-│       ├── widgets/
-│       │   ├── dashboard_app_bar.dart
-│       │   ├── bottom_nav_bar.dart
-│       │   ├── greeting_widget.dart
-│       │   └── quick_actions.dart
-│       └── bloc/
-├── profile/                           # User profile feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   │   ├── profile_local_data_source.dart
-│   │   │   └── profile_remote_data_source.dart
-│   │   ├── models/
-│   │   │   ├── profile_model.dart
-│   │   │   ├── update_profile_request.dart
-│   │   │   └── change_password_request.dart
-│   │   └── repositories/
-│   │       └── profile_repository_impl.dart
-│   ├── domain/
-│   │   ├── entities/
-│   │   │   └── profile.dart
-│   │   ├── repositories/
-│   │   │   └── profile_repository.dart
-│   │   └── usecases/
-│   │       ├── get_profile_usecase.dart
-│   │       ├── update_profile_usecase.dart
-│   │       ├── change_password_usecase.dart
-│   │       ├── upload_avatar_usecase.dart
-│   │       └── delete_account_usecase.dart
-│   └── presentation/
-│       ├── pages/
-│       │   ├── profile_page.dart
-│       │   ├── edit_profile_page.dart
-│       │   ├── settings_page.dart
-│       │   ├── change_password_page.dart
-│       │   ├── notifications_settings.dart
-│       │   └── privacy_settings.dart
-│       ├── widgets/
-│       │   ├── profile_header.dart
-│       │   ├── profile_info_card.dart
-│       │   ├── settings_tile.dart
-│       │   ├── switch_tile.dart
-│       │   └── logout_button.dart
-│       └── bloc/
-│           ├── profile_bloc.dart
-│           ├── settings_bloc.dart
-│           └── edit_profile_bloc.dart
-├── products/                          # Products feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   ├── models/
-│   │   └── repositories/
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── repositories/
-│   │   └── usecases/
-│   └── presentation/
-│       ├── pages/
-│       │   ├── products_list_page.dart
-│       │   ├── product_detail_page.dart
-│       │   ├── search_products_page.dart
-│       │   ├── filters_page.dart
-│       │   └── categories_page.dart
-│       ├── widgets/
-│       │   ├── product_card.dart
-│       │   ├── product_grid_item.dart
-│       │   ├── product_list_item.dart
-│       │   ├── product_image.dart
-│       │   ├── price_widget.dart
-│       │   ├── rating_widget.dart
-│       │   ├── category_chip.dart
-│       │   └── filter_chip.dart
-│       └── bloc/
-│           ├── products_bloc.dart
-│           ├── product_detail_bloc.dart
-│           └── search_bloc.dart
-├── cart/                              # Shopping cart feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   ├── models/
-│   │   └── repositories/
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── repositories/
-│   │   └── usecases/
-│   └── presentation/
-│       ├── pages/
-│       │   ├── cart_page.dart
-│       │   ├── checkout_page.dart
-│       │   └── order_confirmation.dart
-│       ├── widgets/
-│       │   ├── cart_item.dart
-│       │   ├── cart_summary.dart
-│       │   ├── checkout_form.dart
-│       │   ├── payment_methods.dart
-│       │   └── order_summary.dart
-│       └── bloc/
-│           ├── cart_bloc.dart
-│           └── checkout_bloc.dart
-├── orders/                            # Orders feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   ├── models/
-│   │   └── repositories/
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── repositories/
-│   │   └── usecases/
-│   └── presentation/
-│       ├── pages/
-│       │   ├── orders_list_page.dart
-│       │   ├── order_detail_page.dart
-│       │   ├── track_order_page.dart
-│       │   └── order_history_page.dart
-│       ├── widgets/
-│       │   ├── order_card.dart
-│       │   ├── order_status.dart
-│       │   ├── tracking_timeline.dart
-│       │   └── invoice_widget.dart
-│       └── bloc/
-│           ├── orders_bloc.dart
-│           └── order_detail_bloc.dart
-├── notifications/                     # Notifications feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   ├── models/
-│   │   └── repositories/
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── repositories/
-│   │   └── usecases/
-│   └── presentation/
-│       ├── pages/
-│       │   └── notifications_page.dart
-│       ├── widgets/
-│       │   ├── notification_item.dart
-│       │   ├── notification_badge.dart
-│       │   └── empty_notifications.dart
-│       └── bloc/
-│           └── notifications_bloc.dart
-├── settings/                          # App settings feature
-│   ├── data/
-│   │   ├── datasources/
-│   │   ├── models/
-│   │   └── repositories/
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── repositories/
-│   │   └── usecases/
-│   └── presentation/
-│       ├── pages/
-│       │   ├── app_settings_page.dart
-│       │   ├── theme_settings.dart
-│       │   ├── language_settings.dart
-│       │   └── about_page.dart
-│       ├── widgets/
-│       │   ├── theme_selector.dart
-│       │   ├── language_selector.dart
-│       │   └── about_card.dart
-│       └── bloc/
-│           └── settings_bloc.dart
-└── onboarding/                        # Onboarding feature
-    ├── data/
-    │   └── models/
-    │       └── onboarding_item.dart
-    └── presentation/
-        ├── pages/
-        │   └── onboarding_page.dart
-        ├── widgets/
-        │   ├── onboarding_slide.dart
-        │   └── onboarding_indicator.dart
-        └── cubits/
-            └── onboarding_cubit.dart
-
-
-
-
-
-
-
-
-test/
-├── core/
-│   ├── extensions/
-│   ├── utils/
-│   └── widgets/
-├── features/
-│   ├── auth/
-│   │   ├── data/
-│   │   │   ├── datasources/
-│   │   │   │   ├── auth_local_data_source_test.dart
-│   │   │   │   └── auth_remote_data_source_test.dart
-│   │   │   ├── models/
-│   │   │   │   └── auth_model_test.dart
-│   │   │   └── repositories/
-│   │   │       └── auth_repository_impl_test.dart
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   │   └── user_test.dart
-│   │   │   └── usecases/
-│   │   │       ├── login_usecase_test.dart
-│   │   │       └── logout_usecase_test.dart
-│   │   └── presentation/
-│   │       ├── bloc/
-│   │       │   ├── auth_bloc_test.dart
-│   │       │   └── auth_state_test.dart
-│   │       ├── pages/
-│   │       │   └── login_page_test.dart
-│   │       └── widgets/
-│   │           └── login_form_test.dart
-│   └── profile/
-│       └── ... (similar structure)
-├── fixtures/                          # Test fixtures
-│   ├── json/
-│   │   ├── auth/
-│   │   │   ├── login_response.json
-│   │   │   └── user_response.json
-│   │   └── products/
-│   │       └── products_list.json
-│   └── mocks/                         # Mock data
-│       ├── mock_user.dart
-│       └── mock_product.dart
-├── helpers/                           # Test helpers
-│   ├── test_app.dart                  # Test app wrapper
-│   ├── mock_services.dart             # Mock services
-│   ├── pump_app.dart                  # App pump helper
-│   └── widget_tester_extensions.dart  # Widget tester extensions
-└── test_config.dart                   # Test configuration
-
-integration_test/
-├── app_test.dart                      # App integration tests
-├── auth_flow_test.dart                # Auth flow tests
-├── product_flow_test.dart             # Product flow tests
-├── checkout_flow_test.dart            # Checkout flow tests
-└── drivers/
-    └── integration_test_driver.dart   # Test driver
-
-
-
-
-
-
-
-
-assets/
-├── animations/
-│   ├── lottie/
-│   │   ├── success.json
-│   │   ├── error.json
-│   │   ├── loading.json
-│   │   ├── empty.json
-│   │   └── no_internet.json
-│   └── rive/
-│       └── button_animation.riv
-├── images/
-│   ├── png/
-│   │   ├── icons/
-│   │   ├── illustrations/
-│   │   └── logos/
-│   ├── svg/
-│   │   ├── icons/
-│   │   ├── illustrations/
-│   │   └── logos/
-│   └── webp/
-├── icons/
-│   ├── app_icon.png
-│   ├── adaptive_icon.png
-│   └── notification_icon.png
-├── fonts/
-│   └── Inter/
-│       ├── Inter-Regular.ttf
-│       ├── Inter-Medium.ttf
-│       ├── Inter-SemiBold.ttf
-│       ├── Inter-Bold.ttf
-│       └── Inter-ExtraBold.ttf
-├── translations/
-│   ├── en.json
-│   ├── es.json
-│   ├── fr.json
-│   ├── de.json
-│   └── ar.json
-├── config/
-│   ├── development.json
-│   ├── staging.json
-│   ├── production.json
-│   └── secrets.example.json
-└── sounds/
-    ├── notification.mp3
-    └── success.mp3
-
-
-
-
-
-
-
-
-scripts/
-├── build/
-│   ├── build_android.sh
-│   ├── build_ios.sh
-│   ├── build_web.sh
-│   ├── build_windows.sh
-│   └── build_macos.sh
-├── deploy/
-│   ├── deploy_firebase.sh
-│   ├── deploy_appstore.sh
-│   ├── deploy_playstore.sh
-│   └── deploy_web.sh
-├── codegen/
-│   ├── generate_code.sh
-│   ├── generate_icons.sh
-│   ├── generate_splash.sh
-│   └── generate_localizations.sh
-├── quality/
-│   ├── run_tests.sh
-│   ├── run_lint.sh
-│   ├── check_formatting.sh
-│   ├── generate_coverage.sh
-│   └── analyze_code.sh
-├── tools/
-│   ├── update_dependencies.sh
-│   ├── clean_project.sh
-│   └── check_health.sh
-└── ci/
-    ├── setup_environment.sh
-    └── prepare_build.sh
-
-
-
-
-
-
-
-
-    # Root level config files
-.env.example
-.env.development
-.env.staging
-.env.production
-.env
-
-# Flutter configuration
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-
-# Code generation
-build.yaml
-analysis_options.yaml
-dartdoc_options.yaml
-
-# Firebase
-firebase.json
-google-services.json
-GoogleService-Info.plist
-
-# CI/CD
+├── .env.dev
+├── .env.staging
+├── .env.prod
+├── flutter_launcher_icons_dev.yaml
+├── flutter_launcher_icons_staging.yaml
+├── flutter_launcher_icons_prod.yaml
+├── flutter_native_splash_dev.yaml
+├── flutter_native_splash_staging.yaml
+├── flutter_native_splash_prod.yaml
+├── README.md
+└── project_structure.txt
+
+GITHUB (.github/)
+-----------------
 .github/
 ├── workflows/
-│   ├── ci.yml
-│   ├── cd.yml
-│   ├── release.yml
-│   └── nightly.yml
+│   ├── ci.yml                        # CI: analyze, test/coverage, Android/iOS builds
+│   ├── cd.yml                        # CD: Google Play + App Store artifacts/upload
+│   ├── release.yml                   # Tag v*.*.*: release artifacts + GitHub Release
+│   ├── nightly.yml                   # Scheduled: codegen + tests + pub outdated
+│   └── codeql-analysis.yml           # CodeQL security scan (dart, javascript)
 ├── CODEOWNERS
 ├── PULL_REQUEST_TEMPLATE.md
 └── SECURITY.md
 
-# IDE
-.vscode/
-├── settings.json
-├── launch.json
-└── extensions.json
-.idea/
-├── runConfigurations/
-└── workspace.xml
+SCRIPTS (scripts/)
+------------------
+scripts/
+├── run/
+│   └── run_app.sh                    # Run app (flavor, device, codegen, pods)
+├── build/
+│   ├── _common.sh                    # Shared preflight + FVM/flutter fallback
+│   ├── build_android.sh              # APK / App Bundle (flavor-aware)
+│   ├── build_ios.sh                  # iOS build + optional archive/export
+│   ├── build_web.sh
+│   ├── build_macos.sh
+│   └── build_windows.sh
+├── codegen/
+│   ├── generate_code.sh              # build_runner orchestration
+│   ├── generate_icons.sh             # Per-flavor launcher icons
+│   ├── generate_splash.sh            # Per-flavor native splash
+│   └── generate_localizations.sh     # (empty — uses easy_localization JSON at runtime)
+├── quality/
+│   ├── analyze_code.sh               # Extended analysis (some tools optional)
+│   ├── run_lint.sh
+│   ├── check_formatting.sh
+│   ├── run_tests.sh
+│   └── generate_coverage.sh
+├── deploy/
+│   ├── deploy_playstore.sh           # AAB build + optional Fastlane Supply upload
+│   └── deploy_appstore.sh            # IPA archive + optional Fastlane Pilot upload
+├── ci/
+│   ├── setup_environment.sh          # pub get + toolchain check (CI/local)
+│   └── prepare_build.sh              # Optional codegen, analyze, test
+└── tools/
+    ├── clean_project.sh              # flutter clean + refresh deps
+    ├── check_health.sh               # doctor + analyze smoke check
+    └── update_dependencies.sh        # pub upgrade (+ optional --major)
 
-# Package management
-melos.yaml
-pubspec_overrides.yaml
-pubspec.yaml
+ASSETS (assets/)
+----------------
+assets/
+├── animations/
+│   ├── lottie/                       # empty, error, loading, no_internet, success
+│   └── rive/
+├── configs/
+│   ├── development.json
+│   ├── staging.json
+│   └── production.json
+├── fonts/
+│   └── Inter/
+├── images/
+│   ├── png/ (icons, illustrations, logos)
+│   ├── svg/
+│   └── webp/
+├── sounds/
+└── translations/
+    ├── en.json                       # easy_localization
+    └── tr.json
 
-
-
-
-
-
-
-
-based on the project folder structure I give you and the libraries I give you, find from very good ventures vgv enterprise pattern for a complete production ready project, the following files: .env.development, .env.staging, .env.production, .env, main.dart, main.development.dart, main.staging.dart, main.production.dart, app_config.dart, bootstrap.dart, app_widget.dart, app.dart, app_initializer.dart, error_hanlder.dart, performance_monitor.dart, app_bloc_ovserver.dart, injection.dart, network_module.dart, with flavors?
-
-
-
-
-
-
-
+LIB (lib/)
+----------
 lib/
-├── main.dart                          # Entry point
-├── main_dev.dart                      # Development entry
-├── main_staging.dart                  # Staging entry
-├── main_prod.dart                     # Production entry
+├── main.dart                         # Default entry (exports main_dev.dart)
+├── main_dev.dart
+├── main_staging.dart
+├── main_prod.dart
+├── firebase_options_dev.dart
+├── firebase_options_staging.dart
+├── firebase_options_prod.dart
 ├── app/
-│   ├── app.dart                       # Main App widget
-│   ├── app_config.dart                # Environment config
-│   ├── app_widget.dart                # Root widget with providers
-│   ├── app_bloc_observer.dart         # Global Bloc observer
-│   └── app_initializer.dart           # App initialization sequence
+│   ├── app.dart                      # MultiBlocProvider root
+│   ├── app_config.dart               # Flavor + env config
+│   ├── app_widget.dart               # EasyLocalization + MaterialApp.router
+│   ├── app_bloc_observer.dart
+│   └── app_initializer.dart
 ├── bootstrap/
-│   ├── bootstrap.dart                 # App bootstrap
-│   ├── error_handler.dart             # Global error handling
-│   └── performance_monitor.dart       # Performance monitoring
+│   ├── bootstrap.dart                # WidgetsFlutterBinding, dotenv, DI, runApp
+│   └── performance_monitor.dart
+├── core/
+│   ├── bloc/                         # app_lifecycle, connectivity, locale, theme
+│   ├── constants/
+│   ├── errors/                       # exceptions, failures, error_handler, error_mapper
+│   ├── extensions/
+│   ├── mixins/
+│   ├── navigation/                   # app_router, route_guards, pages, observers
+│   ├── services/                     # logger_service
+│   ├── themes/
+│   ├── usecase/
+│   ├── utils/                        # formatters, helpers, functions, validators
+│   └── widgets/                      # common, layout, feedback, dialogs, connectivity
+├── infrastructure/
+│   ├── cache/
+│   ├── di/
+│   │   ├── injection.dart
+│   │   ├── injection.config.dart     # generated
+│   │   └── modules/
+│   │       ├── network_module.dart
+│   │       └── storage_module.dart
+│   ├── network/
+│   │   └── client/                   # api_client, dio_client, interceptors, responses
+│   ├── storage/                      # local, secure, hive, shared_prefs
+│   └── services/                     # firebase, sentry, connectivity, notifications, etc.
+└── features/
+    ├── about/                        # presentation/pages
+    ├── activity/
+    ├── analytics/
+    ├── auth/                         # full clean arch (data/domain/presentation)
+    ├── cart/
+    ├── checkout/
+    ├── dashboard/
+    ├── favorites/
+    ├── help/
+    ├── home/
+    ├── notification/
+    ├── notifications/
+    ├── onboarding/
+    ├── order/                        # data layer (API + models)
+    ├── orders/                       # presentation pages
+    ├── payments/                     # data layer
+    ├── products/                     # full clean arch
+    ├── profile/
+    ├── search/
+    ├── settings/
+    ├── splash/
+    ├── support/
+    ├── sync/                         # data/repositories
+    └── user/                         # data + presentation stubs
 
+FEATURE MODULE PATTERN (full modules: auth, products)
+-----------------------------------------------------
+features/<feature>/
+├── data/
+│   ├── api/                          # Retrofit clients + endpoints
+│   ├── datasources/                  # local + remote
+│   ├── models/                       # DTOs (+ .g.dart / .freezed.dart)
+│   └── repositories/                 # *RepositoryImpl
+├── domain/
+│   ├── entities/                     # Freezed entities
+│   ├── repositories/                 # abstract repositories
+│   ├── usecases/
+│   └── value_objects/
+└── presentation/
+    ├── bloc/ or cubits/
+    ├── pages/                        # @RoutePage() screens
+    └── widgets/
 
+TEST (test/)
+------------
+test/
+├── core/
+├── features/
+│   ├── auth/                         # bloc, pages, widgets, repository tests
+│   └── products/                     # bloc, usecase tests
+├── fixtures/                         # mocks + JSON fixtures
+└── helpers/                          # pump_app, test_app, mock_services
 
+INTEGRATION TEST
+----------------
+integration_test/
+└── app_test.dart
 
+GENERATED FILES (do not edit manually)
+-------------------------------------
+*.g.dart          # json_serializable, retrofit
+*.freezed.dart    # freezed
+*.gr.dart         # auto_route
+injection.config.dart  # injectable
 
+KEY COMMANDS
+------------
+./scripts/run/run_app.sh -f dev -c -d chrome
+./scripts/codegen/generate_code.sh all
+./scripts/quality/run_tests.sh
+./scripts/build/build_android.sh -f prod
+./scripts/deploy/deploy_playstore.sh -f prod
+./scripts/deploy/deploy_appstore.sh -f prod
 
-
-
-
-lib/core/
-├── constants/
-│   ├── app_constants.dart             # App-wide constants
-│   ├── api_constants.dart             # API endpoints, headers
-│   ├── storage_constants.dart         # Storage keys
-│   ├── regex_constants.dart           # Regex patterns
-│   ├── asset_constants.dart           # Asset paths
-│   ├── route_constants.dart           # Route names
-│   └── duration_constants.dart        # Animation durations
-├── errors/
-│   ├── exceptions.dart                # Custom exceptions
-│   ├── failures.dart                  # Failure classes (Either pattern)
-│   ├── error_handler.dart             # Error handling logic
-│   └── error_mapper.dart              # Map exceptions to failures
-├── extensions/
-│   ├── context_extensions.dart        # BuildContext helpers
-│   ├── string_extensions.dart         # String utilities
-│   ├── list_extensions.dart           # List utilities
-│   ├── map_extensions.dart            # Map utilities
-│   ├── datetime_extensions.dart       # DateTime utilities
-│   ├── num_extensions.dart            # Number formatting
-│   ├── widget_extensions.dart         # Widget utilities
-│   └── either_extensions.dart         # Either pattern helpers
-├── mixins/
-│   ├── validation_mixin.dart          # Form validation
-│   ├── debounce_mixin.dart            # Debounce functionality
-│   ├── throttle_mixin.dart            # Throttle functionality
-│   ├── logger_mixin.dart              # Logging utilities
-│   └── disposable_mixin.dart          # Clean up resources
-├── themes/
-│   ├── app_theme.dart                 # Theme configuration
-│   ├── color_palette.dart             # Color definitions
-│   ├── text_styles.dart               # Typography
-│   ├── button_styles.dart             # Button themes
-│   ├── input_styles.dart              # TextField themes
-│   ├── card_styles.dart               # Card themes
-│   ├── dialog_styles.dart             # Dialog themes
-│   ├── bottom_sheet_styles.dart       # BottomSheet themes
-│   └── dark_theme.dart                # Dark mode
-├── utils/
-│   ├── validators/                    # Form validators
-│   │   ├── email_validator.dart
-│   │   ├── password_validator.dart
-│   │   ├── phone_validator.dart
-│   │   └── required_validator.dart
-│   ├── formatters/                    # Text formatters
-│   │   ├── currency_formatter.dart
-│   │   ├── date_formatter.dart
-│   │   ├── phone_formatter.dart
-│   │   └── card_formatter.dart
-│   ├── helpers/                       # Utility functions
-│   │   ├── date_helper.dart
-│   │   ├── file_helper.dart
-│   │   ├── network_helper.dart
-│   │   ├── platform_helper.dart
-│   │   ├── device_helper.dart
-│   │   └── permission_helper.dart
-│   ├── debouncer.dart                 # Debounce utility
-│   ├── throttle.dart                  # Throttle utility
-│   ├── logger.dart                    # Custom logger
-│   ├── connectivity.dart              # Network connectivity
-│   ├── platform_check.dart            # Platform detection
-│   ├── device_info.dart               # Device information
-│   ├── local_notifications.dart       # Local notifications
-│   ├── biometrics.dart                # Biometric authentication
-│   ├── encryption.dart                # Encryption utilities
-│   ├── serialization.dart             # JSON serialization helpers
-│   └── debuggable.dart                # Debug utilities
-├── widgets/
-│   ├── common/
-│   │   ├── app_button.dart            # Custom button
-│   │   ├── app_text_field.dart        # Custom text field
-│   │   ├── app_dropdown.dart          # Custom dropdown
-│   │   ├── app_checkbox.dart          # Custom checkbox
-│   │   ├── app_radio.dart             # Custom radio button
-│   │   ├── app_switch.dart            # Custom switch
-│   │   ├── app_card.dart              # Custom card
-│   │   ├── app_chip.dart              # Custom chip
-│   │   ├── app_badge.dart             # Badge widget
-│   │   ├── app_progress.dart          # Progress indicators
-│   │   └── app_snackbar.dart          # Snackbar widget
-│   ├── layout/
-│   │   ├── responsive_layout.dart     # Responsive layout
-│   │   ├── adaptive_layout.dart       # Adaptive layout
-│   │   ├── scroll_column.dart         # Scrollable column
-│   │   ├── scroll_row.dart            # Scrollable row
-│   │   ├── divider.dart               # Custom divider
-│   │   ├── spacer.dart                # Spacer widget
-│   │   └── constraint_box.dart        # Constrained box
-│   ├── feedback/
-│   │   ├── loading_indicator.dart     # Loading widget
-│   │   ├── error_view.dart            # Error display
-│   │   ├── empty_view.dart            # Empty state
-│   │   ├── retry_view.dart            # Retry button
-│   │   └── shimmer_effect.dart        # Shimmer loading
-│   ├── dialogs/
-│   │   ├── app_dialog.dart            # Base dialog
-│   │   ├── confirm_dialog.dart        # Confirmation dialog
-│   │   ├── alert_dialog.dart          # Alert dialog
-│   │   ├── bottom_sheet.dart          # Bottom sheet
-│   │   └── modal_sheet.dart           # Modal sheet
-│   └── animations/
-│       ├── fade_transition.dart       # Fade animation
-│       ├── slide_transition.dart      # Slide animation
-│       ├── scale_transition.dart      # Scale animation
-│       ├── rotation_transition.dart   # Rotation animation
-│       └── custom_transition.dart     # Custom animations
-└── navigation/
-    ├── app_router.dart                # Router configuration
-    ├── route_guard.dart               # Route guards
-    ├── route_names.dart               # Route names
-    ├── route_transitions.dart         # Custom transitions
-    └── navigation_service.dart        # Navigation service
-
-
-
-
-
-
-
-
-lib/infrastructure/
-├── di/                                # Dependency Injection
-│   ├── injection.dart                 # GetIt configuration
-│   ├── injection.config.dart          # Generated config
-│   ├── di_container.dart              # DI container
-│   └── modules/                       # DI modules
-│       ├── network_module.dart        # Network dependencies
-│       ├── storage_module.dart        # Storage dependencies
-│       ├── repository_module.dart     # Repository dependencies
-│       ├── bloc_module.dart           # Bloc dependencies
-│       └── service_module.dart        # Service dependencies
-├── network/                           # Networking layer
-│   ├── client/
-│   │   ├── api_client.dart            # Base API client
-│   │   ├── dio_client.dart            # Dio implementation
-│   │   ├── interceptors/              # Dio interceptors
-│   │   │   ├── auth_interceptor.dart  # Auth interceptor
-│   │   │   ├── logging_interceptor.dart
-│   │   │   ├── error_interceptor.dart
-│   │   │   ├── retry_interceptor.dart
-│   │   │   └── header_interceptor.dart
-│   │   └── response/                  # API response handling
-│   │       ├── api_response.dart
-│   │       ├── error_response.dart
-│   │       └── paginated_response.dart
-│   ├── endpoints/                     # API endpoints
-│   │   ├── auth_endpoints.dart
-│   │   ├── user_endpoints.dart
-│   │   └── product_endpoints.dart
-│   └── transformers/                  # Response transformers
-│       ├── json_transformer.dart
-│       └── date_transformer.dart
-├── storage/                           # Local storage
-│   ├── local_storage.dart             # Storage interface
-│   ├── secure_storage.dart            # Secure storage impl
-│   ├── shared_prefs_storage.dart      # Shared prefs impl
-│   ├── hive_storage.dart              # Hive storage impl
-│   └── cache_manager.dart             # Cache management
-├── services/                          # External services
-│   ├── firebase/
-│   │   ├── firebase_service.dart
-│   │   ├── analytics_service.dart
-│   │   ├── crashlytics_service.dart
-│   │   ├── messaging_service.dart
-│   │   └── remote_config_service.dart
-│   ├── sentry_service.dart            # Sentry service
-│   ├── deep_link_service.dart         # Deep linking
-│   ├── notification_service.dart      # Push notifications
-│   ├── biometric_service.dart         # Biometric auth
-│   ├── location_service.dart          # Location services
-│   └── payment_service.dart           # Payment services
-└── platform/                          # Platform-specific
-    ├── platform_service.dart          # Platform interface
-    ├── android_service.dart           # Android impl
-    ├── ios_service.dart               # iOS impl
-    └── web_service.dart               # Web impl
-
-
-
-
-dependencies:
-  flutter:
-    sdk: flutter
-
-  cupertino_icons: ^1.0.8
-
-  # Core
-  dartz: ^0.10.1
-  equatable: ^2.0.5
-  freezed_annotation: ^3.1.0
-  get_it: ^9.2.0
-  injectable: ^2.7.1+4
-  json_annotation: ^4.9.0
-  
-  # State Management
-  flutter_bloc: ^9.1.1
-  hydrated_bloc: ^10.1.1
-  
-  # Network 
-  dio: ^5.9.0  
-  retrofit: ^4.9.2
-  logger: ^2.6.2
-  synchronized: ^3.1.0
- 
-  # Local Storage
-  shared_preferences: ^2.5.4
-  hive: ^2.2.3
-  path_provider: ^2.1.5
-  hive_flutter: ^1.1.0
-  flutter_secure_storage: ^10.0.0
-  
-  # Firebase
-  firebase_core: ^4.3.0
-  firebase_analytics: ^12.1.0
-  firebase_crashlytics: ^5.0.6
-  firebase_remote_config: ^6.1.3  
-  firebase_messaging: ^15.1.2
-  
-  # Monitoring
-  sentry_flutter: ^9.10.0
-  
-  # UI
-  flutter_svg: ^2.2.3
-  cached_network_image: ^3.3.0
-  shimmer: ^3.0.0
-  # check version ***
-  auto_route: ^7.8.3
-  pinput: ^4.0.1
-  dropdown_button2: ^2.4.3
-
-  # Formz
-  formz: ^0.8.0
-  reactive_forms: ^15.0.1
-
-  # Navigation
-  go_router: ^17.0.1
-  
-  # Utils
-  intl: ^0.20.2
-  # Localization
-  easy_localization: ^3.0.3
-  
-  # Performance
-  provider: ^6.1.1
-
-  # Security
-  encrypt: ^5.0.1
-
-  # Animations
-  lottie: ^2.7.0
-  animations: ^2.0.9
-
-  flutter_localizations:
-    sdk: flutter
-  url_launcher: ^6.2.1
-  package_info_plus: ^9.0.0
-  connectivity_plus: ^7.0.0
-  device_info_plus: ^12.3.0
-  
-  # Very Good Analysis
-  very_good_analysis: ^10.0.0
-
-
- 
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
-# Code Generation
-  build_runner: ^2.4.9
-  json_serializable: ^6.8.0
-  freezed: ^3.1.0
-  injectable_generator: ^2.9.1
-  retrofit_generator: ^10.2.1
-  auto_route_generator: ^7.3.3
-
-  # Analysis
-  very_good_analysis: ^10.0.0
-  custom_lint: ^0.6.4
-  dart_code_metrics: ^5.19.1
-
-
-   # Testing
-  mocktail: ^1.0.4
-  bloc_test: ^9.1.4
-  integration_test:
-    sdk: flutter
-  golden_toolkit: ^0.16.0
-
-   # Coverage
-  test_cov_console: ^1.16.0
-  
+See README.md for full script and CI/CD documentation.

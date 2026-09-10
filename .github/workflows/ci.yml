@@ -1,7 +1,9 @@
 name: CI Pipeline
 
-# Continuous integration: analyze, test, and verify release builds.
-# Deployment is handled by cd.yml after a successful main-branch CI run.
+# Purpose: Verify code quality
+# Typical steps: Analyze, test, build check
+# When: every PR or push to main or develop branches
+# Risk: Low - basic checks, no sensitive operations
 
 on:
   push:
@@ -94,25 +96,3 @@ jobs:
         with:
           name: ios-build
           path: build/ios/
-
-  build-web:
-    name: Build Web
-    runs-on: ubuntu-latest
-    needs: [analyze, test]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-
-      - run: chmod +x ./scripts/ci/setup_environment.sh ./scripts/build/build_web.sh ./scripts/build/_common.sh
-      - run: ./scripts/ci/setup_environment.sh
-      - run: ./scripts/build/build_web.sh -f prod --skip-analyze --skip-test
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: build/web/

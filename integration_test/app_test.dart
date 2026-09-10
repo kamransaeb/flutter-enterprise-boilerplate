@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:enterprise_app/main.dart' as app;
-import 'package:enterprise_app/app/app_config.dart';
+import 'package:flutter_enterprise_boilerplate/app/main.dart' as app;
+import 'package:app/app/app_config.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
